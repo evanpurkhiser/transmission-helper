@@ -1,4 +1,6 @@
+import {Agent, tool} from '@openai/agents';
 import OpenAI from 'openai';
+import z from 'zod';
 
 import type {ClassificationResult, MovieFile, TorrentInfo, TvFile} from './types';
 
@@ -95,6 +97,17 @@ If the torrent contains no movies or TV episodes (like software, music,
 books, etc.), return an empty files array.
 
 Only consider actual video files with common extensions (.mp4, .mkv, .avi, .mov, etc.).`;
+
+async function existingTvShows(): Promise<string[]> {
+  return ['The Studio', 'Cowboy Bebop'];
+}
+
+const checkTvShowExists = tool({
+  name: 'check_tv_show_exists',
+  description: 'Checks if a TV Show exists on the filesystem',
+  parameters: z.string(),
+  execute: async (): Promise<string | null> => null,
+});
 
 export async function classifyFiles(
   client: OpenAI,
