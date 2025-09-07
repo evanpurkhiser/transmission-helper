@@ -1,10 +1,10 @@
-# Transmission Helper
+## Transmission Helper
 
 An AI-powered tool that automatically classifies and organizes completed
 torrents from Transmission, then hard-links media files to your organized
 library structure.
 
-## Quick Start
+### Quick Start
 
 ```bash
 docker run -d \
@@ -19,7 +19,7 @@ docker run -d \
   evanpurkhiser/transmission-helper
 ```
 
-## What It Does
+### What It Does
 
 1. **Fetches torrent info** from Transmission using the provided hash
 2. **AI Classification** - Uses OpenAI to analyze file names and classify content as movies or TV series
@@ -27,7 +27,7 @@ docker run -d \
 4. **Hard Linking** - Creates hard links to allow continued seeding
 5. **Telegram Notifications** - Sends detailed reports of what was processed and linked
 
-## Environment Variables
+### Environment Variables
 
 - `TORRENT_HASH` - Hash of the completed torrent to process. Typically should be set
 - `OPENAI_API_KEY` - OpenAI API key for content classification
