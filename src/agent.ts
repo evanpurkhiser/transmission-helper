@@ -44,6 +44,7 @@ export const classificationSchema = z
 export type ClassificationResult = z.infer<typeof classificationSchema>;
 export type SeriesFile = z.infer<typeof seriesFileSchema>;
 export type MovieFile = z.infer<typeof movieFileSchema>;
+export type ClassifiedFile = z.infer<typeof fileSchema>;
 
 interface AgentConfig {
   /**

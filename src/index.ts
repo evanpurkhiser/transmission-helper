@@ -1,11 +1,21 @@
 import {Transmission} from '@ctrl/transmission';
 import {setDefaultOpenAIKey} from '@openai/agents';
+import {init} from '@sentry/node';
 
 import {readdir} from 'fs/promises';
+import {join} from 'path';
 
 import {createAgent} from './agent';
 import {config} from './config';
-import {formatTelegramMessage, notifyTelegram} from './telegram';
+import {hardLinkFiles} from './files';
+import {
+  formatFailedClassification,
+  formatHardLinkResults,
+  formatTorrentClassification,
+  notifyTelegram,
+} from './telegram';
+
+init({dsn: config.SENTRY_DSN});
 
 async function main() {
   setDefaultOpenAIKey(config.OPENAI_API_KEY!);
@@ -43,10 +53,21 @@ async function main() {
     fileNames,
   });
 
-  console.log(classification);
+  if (classification === undefined) {
+    await notifyTelegram(formatFailedClassification(torrent.name));
+    return;
+  }
 
-  const telegramMessage = formatTelegramMessage(torrent.name, classification);
+  const torrentDir = join(torrent.savePath, torrent.raw.files[0].name.split('/')[0]);
+
+  const linkResults = await hardLinkFiles(torrentDir, classification.files);
+  console.log('Link results:', linkResults);
+
+  const telegramMessage = formatTorrentClassification(torrent.name, classification);
   await notifyTelegram(telegramMessage);
+
+  const linkMessage = formatHardLinkResults(linkResults);
+  await notifyTelegram(linkMessage);
 }
 
 main();

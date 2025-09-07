@@ -25,6 +25,7 @@ const configSchema = z.object({
     .describe('Password for Transmission RPC authentication'),
   TELEGRAM_TOKEN: z.string().describe('Bot token for Telegram notifications'),
   TELEGRAM_CHAT_ID: z.string().describe('Chat ID for sending Telegram notifications'),
+  SENTRY_DSN: z.string().optional().describe('Optional Sentry DSN for error tracking'),
 });
 
 export const config = configSchema.parse(process.env);

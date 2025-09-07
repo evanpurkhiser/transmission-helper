@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 
 import {ClassificationResult} from './agent';
-import {formatTelegramMessage} from './telegram';
+import {formatTorrentClassification} from './telegram';
 
 describe('formatTelegramMessage', () => {
   it('should format message with series files', () => {
@@ -36,7 +36,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTelegramMessage(torrentName, classification);
+    const result = formatTorrentClassification(torrentName, classification);
 
     expect(result).toBe(
       [
@@ -66,7 +66,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTelegramMessage(torrentName, classification);
+    const result = formatTorrentClassification(torrentName, classification);
 
     expect(result).toBe(
       [
@@ -114,7 +114,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTelegramMessage(torrentName, classification);
+    const result = formatTorrentClassification(torrentName, classification);
 
     expect(result).toBe(
       [
@@ -161,7 +161,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTelegramMessage(torrentName, classification);
+    const result = formatTorrentClassification(torrentName, classification);
 
     expect(result).toBe(
       [
@@ -189,7 +189,7 @@ describe('formatTelegramMessage', () => {
       files: [],
     };
 
-    const result = formatTelegramMessage(torrentName, classification);
+    const result = formatTorrentClassification(torrentName, classification);
 
     expect(result).toBe(
       [
@@ -242,7 +242,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTelegramMessage(torrentName, classification);
+    const result = formatTorrentClassification(torrentName, classification);
 
     expect(result).toBe(
       [

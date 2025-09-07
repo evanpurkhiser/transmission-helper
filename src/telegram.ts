@@ -4,6 +4,7 @@ import {escapeMarkdown} from 'telegram-escape';
 
 import {ClassificationResult, MovieFile, SeriesFile} from './agent';
 import {config} from './config';
+import {HardLinkResult} from './files';
 
 function stringifyRanges(nums: number[]): string[] {
   const groupedRanges = groupBy(
@@ -35,7 +36,7 @@ function formatMovieFiles(files: MovieFile[]) {
   return files.map(movieFile => `🎬 ${movieFile.title}`).join('\n');
 }
 
-export function formatTelegramMessage(
+export function formatTorrentClassification(
   torrentName: string,
   classification: ClassificationResult
 ): string {
@@ -62,6 +63,34 @@ export function formatTelegramMessage(
 
   if (movieList) {
     lines.push(movieList);
+  }
+
+  return lines.join('\n');
+}
+
+export function formatFailedClassification(torrentName: string): string {
+  return [
+    '📥 Finished torrent download',
+    '',
+    `*${escapeMarkdown(torrentName)}*`,
+    '',
+    '⚠️ AI failed to classify the torrent',
+  ].join('\n');
+}
+
+export function formatHardLinkResults(linkResults: HardLinkResult): string {
+  const lines = ['🔗 Torrent Hard link results', ''];
+
+  if (linkResults.linked.length > 0) {
+    lines.push(`✅ Linked: ${linkResults.linked.length} files`);
+  }
+
+  if (linkResults.exists.length > 0) {
+    lines.push(`⏭️ Skipped: ${linkResults.exists.length} files \\(already exist\\)`);
+  }
+
+  if (linkResults.errors.length > 0) {
+    lines.push(`❌ Errors: ${linkResults.errors.length} files`);
   }
 
   return lines.join('\n');
