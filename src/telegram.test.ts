@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 
 import {ClassificationResult} from './agent';
-import {formatTorrentClassification} from './telegram';
+import {formatTorrentResults} from './telegram';
 
 describe('formatTelegramMessage', () => {
   it('should format message with series files', () => {
@@ -36,19 +36,16 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentClassification(torrentName, classification);
+    const result = formatTorrentResults(torrentName, classification);
 
     expect(result).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '**Breaking.Bad.S01.1080p.BluRay**',
-        'Complete first season of Breaking Bad',
+        '*Breaking\\.Bad\\.S01\\.1080p\\.BluRay*\nComplete first season of Breaking Bad',
         '',
-        '**TV Series**',
-        '',
-        'Breaking Bad',
-        '  **Season 1** Episode 1..3',
+        '📺 Breaking Bad',
+        '\\- Season 1 Episode 1→3',
       ].join('\n')
     );
   });
@@ -66,18 +63,15 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentClassification(torrentName, classification);
+    const result = formatTorrentResults(torrentName, classification);
 
     expect(result).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '**The.Dark.Knight.2008.1080p.BluRay**',
-        'Christopher Nolan Batman film',
+        '*The\\.Dark\\.Knight\\.2008\\.1080p\\.BluRay*\nChristopher Nolan Batman film',
         '',
-        '**Movies**',
-        '',
-        'The Dark Knight',
+        '🎬 The Dark Knight',
       ].join('\n')
     );
   });
@@ -114,23 +108,20 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentClassification(torrentName, classification);
+    const result = formatTorrentResults(torrentName, classification);
 
     expect(result).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '**Mixed.TV.Pack**',
-        'Various TV episodes',
+        '*Mixed\\.TV\\.Pack*\nVarious TV episodes',
         '',
-        '**TV Series**',
+        '📺 Breaking Bad',
+        '\\- Season 1 Episode 1',
+        '\\- Season 2 Episode 1',
         '',
-        'Breaking Bad',
-        '  **Season 1** Episode 1',
-        '  **Season 2** Episode 1',
-        '',
-        'Better Call Saul',
-        '  **Season 1** Episode 1',
+        '📺 Better Call Saul',
+        '\\- Season 1 Episode 1',
       ].join('\n')
     );
   });
@@ -161,23 +152,18 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentClassification(torrentName, classification);
+    const result = formatTorrentResults(torrentName, classification);
 
     expect(result).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '**Mixed.Content.Pack**',
-        'Mixed movies and TV content',
+        '*Mixed\\.Content\\.Pack*\nMixed movies and TV content',
         '',
-        '**TV Series**',
-        '',
-        'Westworld',
-        '  **Season 1** Episode 1',
-        '**Movies**',
-        '',
-        'Inception',
-        'Interstellar',
+        '📺 Westworld',
+        '\\- Season 1 Episode 1',
+        '🎬 Inception',
+        '🎬 Interstellar',
       ].join('\n')
     );
   });
@@ -189,14 +175,13 @@ describe('formatTelegramMessage', () => {
       files: [],
     };
 
-    const result = formatTorrentClassification(torrentName, classification);
+    const result = formatTorrentResults(torrentName, classification);
 
     expect(result).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '**Empty.Torrent**',
-        'No relevant files found',
+        '*Empty\\.Torrent*\nNo relevant files found',
         '',
       ].join('\n')
     );
@@ -242,19 +227,78 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentClassification(torrentName, classification);
+    const result = formatTorrentResults(torrentName, classification);
 
     expect(result).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '**Series.Season.Pack**',
-        'Complete season with sequential episodes',
+        '*Series\\.Season\\.Pack*\nComplete season with sequential episodes',
         '',
-        '**TV Series**',
+        '📺 Game of Thrones',
+        '\\- Season 1 Episode 1→3, 5',
+      ].join('\n')
+    );
+  });
+
+  it('should sort episodes correctly with double digit numbers', () => {
+    const torrentName = 'Series.Full.Season';
+    const classification: ClassificationResult = {
+      description: 'Season with episodes 1-11 in mixed order',
+      files: [
+        {
+          type: 'series',
+          seriesTitle: 'Test Series',
+          season: 2,
+          episode: 10,
+          episodeTitle: 'Episode 10',
+          filePath: 'Test.S02E10.mkv',
+        },
+        {
+          type: 'series',
+          seriesTitle: 'Test Series',
+          season: 2,
+          episode: 1,
+          episodeTitle: 'Episode 1',
+          filePath: 'Test.S02E01.mkv',
+        },
+        {
+          type: 'series',
+          seriesTitle: 'Test Series',
+          season: 2,
+          episode: 11,
+          episodeTitle: 'Episode 11',
+          filePath: 'Test.S02E11.mkv',
+        },
+        {
+          type: 'series',
+          seriesTitle: 'Test Series',
+          season: 2,
+          episode: 2,
+          episodeTitle: 'Episode 2',
+          filePath: 'Test.S02E02.mkv',
+        },
+        {
+          type: 'series',
+          seriesTitle: 'Test Series',
+          season: 2,
+          episode: 9,
+          episodeTitle: 'Episode 9',
+          filePath: 'Test.S02E09.mkv',
+        },
+      ],
+    };
+
+    const result = formatTorrentResults(torrentName, classification);
+
+    expect(result).toBe(
+      [
+        '📥 Finished torrent download',
         '',
-        'Game of Thrones',
-        '  **Season 1** Episode 1..3, 5',
+        '*Series\\.Full\\.Season*\nSeason with episodes 1\\-11 in mixed order',
+        '',
+        '📺 Test Series',
+        '\\- Season 2 Episode 1→2, 9→11',
       ].join('\n')
     );
   });

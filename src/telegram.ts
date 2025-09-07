@@ -6,14 +6,14 @@ import {ClassificationResult, MovieFile, SeriesFile} from './agent';
 import {config} from './config';
 import {HardLinkResult} from './files';
 
-function stringifyRanges(nums: number[]): string[] {
+function stringRange(nums: number[]): string[] {
   const groupedRanges = groupBy(
     nums.map((num, index) => ({num, index})),
     x => x.num - x.index
   );
 
   return Object.values(groupedRanges).map(g =>
-    g.length === 1 ? String(g[0].num) : escapeMarkdown(`${g[0].num}..${g.at(-1)?.num}`)
+    g.length === 1 ? String(g[0].num) : `${g[0].num}→${g.at(-1)?.num}`
   );
 }
 
@@ -23,7 +23,7 @@ function formatSeriesFiles(seriesName: string, files: SeriesFile[]) {
   const items = Object.entries(seasons)
     .map(([season, files]) => [
       season,
-      stringifyRanges(files.map(file => file.episode).toSorted()).join(', '),
+      stringRange(files.map(file => file.episode).toSorted((a, b) => a - b)).join(', '),
     ])
     .map(([season, episodeList]) => `Season ${season} Episode ${episodeList}`);
 
@@ -68,15 +68,15 @@ export function formatTorrentResults(
 
   if (linkResults) {
     lines.push('');
-    
+
     if (linkResults.linked.length > 0) {
       lines.push(`✅ Linked: ${linkResults.linked.length} files`);
     }
-    
+
     if (linkResults.exists.length > 0) {
       lines.push(`⏭️ Skipped: ${linkResults.exists.length} files \\(already exist\\)`);
     }
-    
+
     if (linkResults.errors.length > 0) {
       lines.push(`❌ Errors: ${linkResults.errors.length} files`);
     }
