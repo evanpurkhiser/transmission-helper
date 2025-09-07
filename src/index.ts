@@ -25,7 +25,8 @@ async function main() {
     password: config.TRANSMISSION_PASSWORD,
   });
 
-  const torrent = await client.getTorrent(config.TORRENT_HASH);
+  const torrentId = config.TORRENT_HASH;
+  const torrent = await client.getTorrent(torrentId);
 
   const fileNames = torrent.raw.files.map((file: any) =>
     file.name.split('/').slice(1).join('/')
@@ -57,12 +58,25 @@ async function main() {
     return;
   }
 
-  const torrentDir = join(torrent.savePath, torrent.raw.files[0].name.split('/')[0]);
+  const torrentPathName = torrent.raw.files[0].name.split('/')[0];
+  const torrentDir = join(torrent.savePath, torrentPathName);
 
   const linkResults = await hardLinkFiles(torrentDir, classification.files);
-  console.log('Link results:', linkResults);
 
-  const telegramMessage = formatTorrentResults(torrent.name, classification, linkResults);
+  const moveTorrent =
+    linkResults.errors.length === 0 &&
+    linkResults.linked.length + linkResults.exists.length > 0;
+
+  if (moveTorrent && !!config.MOVE_COMPLETE_DIR) {
+    await client.moveTorrent(torrentId, config.MOVE_COMPLETE_DIR);
+  }
+
+  const telegramMessage = formatTorrentResults({
+    torrentName: torrent.name,
+    classification,
+    linkResults,
+    wasMoved: moveTorrent && !!config.MOVE_COMPLETE_DIR,
+  });
   await notifyTelegram(telegramMessage);
 }
 

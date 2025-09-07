@@ -36,7 +36,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults(torrentName, classification);
+    const result = formatTorrentResults({torrentName, classification});
 
     expect(result).toBe(
       [
@@ -45,7 +45,7 @@ describe('formatTelegramMessage', () => {
         '*Breaking\\.Bad\\.S01\\.1080p\\.BluRay*\nComplete first season of Breaking Bad',
         '',
         '📺 Breaking Bad',
-        '\\- Season 1 Episode 1→3',
+        'Season 1 Episode 1→3',
       ].join('\n')
     );
   });
@@ -63,7 +63,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults(torrentName, classification);
+    const result = formatTorrentResults({torrentName, classification});
 
     expect(result).toBe(
       [
@@ -108,7 +108,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults(torrentName, classification);
+    const result = formatTorrentResults({torrentName, classification});
 
     expect(result).toBe(
       [
@@ -117,11 +117,11 @@ describe('formatTelegramMessage', () => {
         '*Mixed\\.TV\\.Pack*\nVarious TV episodes',
         '',
         '📺 Breaking Bad',
-        '\\- Season 1 Episode 1',
-        '\\- Season 2 Episode 1',
+        'Season 1 Episode 1',
+        'Season 2 Episode 1',
         '',
         '📺 Better Call Saul',
-        '\\- Season 1 Episode 1',
+        'Season 1 Episode 1',
       ].join('\n')
     );
   });
@@ -152,7 +152,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults(torrentName, classification);
+    const result = formatTorrentResults({torrentName, classification});
 
     expect(result).toBe(
       [
@@ -161,7 +161,7 @@ describe('formatTelegramMessage', () => {
         '*Mixed\\.Content\\.Pack*\nMixed movies and TV content',
         '',
         '📺 Westworld',
-        '\\- Season 1 Episode 1',
+        'Season 1 Episode 1',
         '🎬 Inception',
         '🎬 Interstellar',
       ].join('\n')
@@ -175,7 +175,7 @@ describe('formatTelegramMessage', () => {
       files: [],
     };
 
-    const result = formatTorrentResults(torrentName, classification);
+    const result = formatTorrentResults({torrentName, classification});
 
     expect(result).toBe(
       [
@@ -227,7 +227,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults(torrentName, classification);
+    const result = formatTorrentResults({torrentName, classification});
 
     expect(result).toBe(
       [
@@ -236,7 +236,7 @@ describe('formatTelegramMessage', () => {
         '*Series\\.Season\\.Pack*\nComplete season with sequential episodes',
         '',
         '📺 Game of Thrones',
-        '\\- Season 1 Episode 1→3, 5',
+        'Season 1 Episode 1→3, 5',
       ].join('\n')
     );
   });
@@ -289,7 +289,7 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults(torrentName, classification);
+    const result = formatTorrentResults({torrentName, classification});
 
     expect(result).toBe(
       [
@@ -298,7 +298,7 @@ describe('formatTelegramMessage', () => {
         '*Series\\.Full\\.Season*\nSeason with episodes 1\\-11 in mixed order',
         '',
         '📺 Test Series',
-        '\\- Season 2 Episode 1→2, 9→11',
+        'Season 2 Episode 1→2, 9→11',
       ].join('\n')
     );
   });

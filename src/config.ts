@@ -26,6 +26,10 @@ const configSchema = z.object({
   TELEGRAM_TOKEN: z.string().describe('Bot token for Telegram notifications'),
   TELEGRAM_CHAT_ID: z.string().describe('Chat ID for sending Telegram notifications'),
   SENTRY_DSN: z.string().optional().describe('Optional Sentry DSN for error tracking'),
+  MOVE_COMPLETE_DIR: z
+    .string()
+    .optional()
+    .describe('Directory to move completed torrents into'),
 });
 
 export const config = configSchema.parse(process.env);
