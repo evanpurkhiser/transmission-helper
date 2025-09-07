@@ -3,7 +3,6 @@ import {setDefaultOpenAIKey} from '@openai/agents';
 import {init} from '@sentry/node';
 
 import {readdir} from 'fs/promises';
-import {join} from 'path';
 
 import {createAgent} from './agent';
 import {config} from './config';
@@ -28,9 +27,7 @@ async function main() {
   const torrentId = config.TORRENT_HASH;
   const torrent = await client.getTorrent(torrentId);
 
-  const fileNames = torrent.raw.files.map((file: any) =>
-    file.name.split('/').slice(1).join('/')
-  );
+  const fileNames = torrent.raw.files.map((file: any) => file.name);
 
   function listExistingTvSeries() {
     return readdir(config.TV_SERIES_DIR);
@@ -58,10 +55,7 @@ async function main() {
     return;
   }
 
-  const torrentPathName = torrent.raw.files[0].name.split('/')[0];
-  const torrentDir = join(torrent.savePath, torrentPathName);
-
-  const linkResults = await hardLinkFiles(torrentDir, classification.files);
+  const linkResults = await hardLinkFiles(torrent.savePath, classification.files);
 
   const moveTorrent =
     linkResults.errors.length === 0 &&
