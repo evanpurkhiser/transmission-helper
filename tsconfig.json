@@ -16,7 +16,8 @@
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "allowJs": true
+    "allowJs": true,
+    "skipLibCheck": true
   },
   "exclude": [
     "node_modules"
