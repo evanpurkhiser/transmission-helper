@@ -36,9 +36,10 @@ function formatMovieFiles(files: MovieFile[]) {
   return files.map(movieFile => `🎬 ${movieFile.title}`).join('\n');
 }
 
-export function formatTorrentClassification(
+export function formatTorrentResults(
   torrentName: string,
-  classification: ClassificationResult
+  classification: ClassificationResult,
+  linkResults?: HardLinkResult
 ): string {
   const lines = [
     '📥 Finished torrent download',
@@ -63,6 +64,22 @@ export function formatTorrentClassification(
 
   if (movieList) {
     lines.push(movieList);
+  }
+
+  if (linkResults) {
+    lines.push('');
+    
+    if (linkResults.linked.length > 0) {
+      lines.push(`✅ Linked: ${linkResults.linked.length} files`);
+    }
+    
+    if (linkResults.exists.length > 0) {
+      lines.push(`⏭️ Skipped: ${linkResults.exists.length} files \\(already exist\\)`);
+    }
+    
+    if (linkResults.errors.length > 0) {
+      lines.push(`❌ Errors: ${linkResults.errors.length} files`);
+    }
   }
 
   return lines.join('\n');

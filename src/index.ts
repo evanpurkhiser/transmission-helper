@@ -10,8 +10,7 @@ import {config} from './config';
 import {hardLinkFiles} from './files';
 import {
   formatFailedClassification,
-  formatHardLinkResults,
-  formatTorrentClassification,
+  formatTorrentResults,
   notifyTelegram,
 } from './telegram';
 
@@ -63,11 +62,8 @@ async function main() {
   const linkResults = await hardLinkFiles(torrentDir, classification.files);
   console.log('Link results:', linkResults);
 
-  const telegramMessage = formatTorrentClassification(torrent.name, classification);
+  const telegramMessage = formatTorrentResults(torrent.name, classification, linkResults);
   await notifyTelegram(telegramMessage);
-
-  const linkMessage = formatHardLinkResults(linkResults);
-  await notifyTelegram(linkMessage);
 }
 
 main();
