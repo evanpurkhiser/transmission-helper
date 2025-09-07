@@ -1,87 +1,75 @@
+import {groupBy} from 'es-toolkit';
 import {ofetch} from 'ofetch';
+import {escapeMarkdown} from 'telegram-escape';
 
-import type {ClassificationResult, MovieFile, TvFile} from './types';
+import {ClassificationResult, MovieFile, SeriesFile} from './agent';
+import {config} from './config';
+
+function stringifyRanges(nums: number[]): string[] {
+  const groupedRanges = groupBy(
+    nums.map((num, index) => ({num, index})),
+    x => x.num - x.index
+  );
+
+  return Object.values(groupedRanges).map(g =>
+    g.length === 1 ? String(g[0].num) : escapeMarkdown(`${g[0].num}..${g.at(-1)?.num}`)
+  );
+}
+
+function formatSeriesFiles(seriesName: string, files: SeriesFile[]) {
+  const seasons = groupBy(files, file => file.season);
+
+  const items = Object.entries(seasons)
+    .map(([season, files]) => [
+      season,
+      stringifyRanges(files.map(file => file.episode).toSorted()).join(', '),
+    ])
+    .map(([season, episodeList]) => `Season ${season} Episode ${episodeList}`);
+
+  const seasonList = items.map(label => `${escapeMarkdown('-')} ${label}`).join('\n');
+
+  return `📺 ${seriesName}\n${seasonList}`;
+}
+
+function formatMovieFiles(files: MovieFile[]) {
+  return files.map(movieFile => `🎬 ${movieFile.title}`).join('\n');
+}
 
 export function formatTelegramMessage(
   torrentName: string,
   classification: ClassificationResult
 ): string {
-  const lines = ['Finished torrent download\n', `**${torrentName}**\n`];
+  const lines = [
+    '📥 Finished torrent download',
+    '',
+    `*${escapeMarkdown(torrentName)}*\n${escapeMarkdown(classification.description)}`,
+    '',
+  ];
 
-  const tvShows = classification.files.filter(f => f.type === 'tv-show');
+  const series = classification.files.filter(f => f.type === 'series');
   const movies = classification.files.filter(f => f.type === 'movie');
 
-  // Group TV episodes by series and season
-  const seriesMap = new Map<string, Map<number, number[]>>();
+  // Group series together
+  const seriesList = Object.entries(groupBy(series, file => file.seriesTitle))
+    .map(([seriesName, files]) => formatSeriesFiles(seriesName, files))
+    .join('\n\n');
 
-  for (const show of tvShows) {
-    if (!seriesMap.has(show.seriesTitle)) {
-      seriesMap.set(show.seriesTitle, new Map());
-    }
-    const seasons = seriesMap.get(show.seriesTitle)!;
-    if (!seasons.has(show.season)) {
-      seasons.set(show.season, []);
-    }
-    seasons.get(show.season)!.push(show.episode);
+  if (seriesList) {
+    lines.push(seriesList);
   }
 
-  // Format TV shows
-  for (const [seriesTitle, seasons] of seriesMap) {
-    lines.push(`TV Show: ${seriesTitle}\n`);
+  const movieList = formatMovieFiles(movies);
 
-    for (const [seasonNum, episodes] of seasons) {
-      episodes.sort((a, b) => a - b);
-      const ranges = consolidateEpisodeRanges(episodes);
-      const rangeText = ranges
-        .map(range =>
-          range.start === range.end ? `${range.start}` : `${range.start} to ${range.end}`
-        )
-        .join(', ');
-
-      lines.push(`Season ${seasonNum} -> Episode ${rangeText}\n`);
-    }
-    lines.push('');
+  if (movieList) {
+    lines.push(movieList);
   }
 
-  // Format movies
-  if (movies.length > 0) {
-    lines.push('Movies:\n');
-    for (const movie of movies) {
-      lines.push(`${movie.title}\n`);
-    }
-  }
-
-  return lines.join('').trim();
-}
-
-function consolidateEpisodeRanges(
-  episodes: number[]
-): Array<{start: number; end: number}> {
-  if (episodes.length === 0) {
-    return [];
-  }
-
-  const ranges: Array<{start: number; end: number}> = [];
-  let start = episodes[0];
-  let end = episodes[0];
-
-  for (let i = 1; i < episodes.length; i++) {
-    if (episodes[i] === end + 1) {
-      end = episodes[i];
-    } else {
-      ranges.push({start, end});
-      start = episodes[i];
-      end = episodes[i];
-    }
-  }
-
-  ranges.push({start, end});
-  return ranges;
+  return lines.join('\n');
 }
 
 export async function notifyTelegram(text: string) {
-  const token = process.env.TELEGRAM_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  const token = config.TELEGRAM_TOKEN;
+  const chatId = config.TELEGRAM_CHAT_ID;
 
   const data = {
     text,
@@ -97,8 +85,8 @@ export async function notifyTelegram(text: string) {
 
   try {
     await ofetch(`https://api.telegram.org/bot${token}/sendMessage`, options);
-  } catch {
-    console.error('Failed to send telegram notification');
+  } catch (error) {
+    console.error('Failed to send telegram notification', error.data);
   }
 
   return null;

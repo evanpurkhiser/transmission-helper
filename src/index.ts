@@ -1,36 +1,52 @@
 import {Transmission} from '@ctrl/transmission';
-import OpenAI from 'openai';
+import {setDefaultOpenAIKey} from '@openai/agents';
 
-import {classifyFiles} from './prompt';
+import {readdir} from 'fs/promises';
+
+import {createAgent} from './agent';
+import {config} from './config';
+import {formatTelegramMessage, notifyTelegram} from './telegram';
 
 async function main() {
-  const torrentId = process.env.TR_TORRENT_HASH;
-
-  const moviesDir = process.env.MOVIES_DIR;
-  const tvShowsDir = process.env.TV_SHOWS_DIR;
-
-  if (!torrentId) {
-    console.error('TR_TORRENT_HASH environment variable is required');
-    process.exit(1);
-  }
+  setDefaultOpenAIKey(config.OPENAI_API_KEY!);
 
   const client = new Transmission({
-    baseUrl: process.env.TRANSMISSION_BASE_URL,
-    username: process.env.TRANSMISSION_USERNAME,
-    password: process.env.TRANSMISSION_PASSWORD,
+    baseUrl: config.TRANSMISSION_BASE_URL,
+    username: config.TRANSMISSION_USERNAME,
+    password: config.TRANSMISSION_PASSWORD,
   });
 
-  const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
-
-  const torrent = await client.getTorrent(torrentId);
+  const torrent = await client.getTorrent(config.TORRENT_HASH);
 
   const fileNames = torrent.raw.files.map((file: any) =>
     file.name.split('/').slice(1).join('/')
   );
 
-  const classification = await classifyFiles(openai, {name: torrent.name, fileNames});
+  function listExistingTvSeries() {
+    return readdir(config.TV_SERIES_DIR);
+  }
+
+  async function checkTvShowExists({name}: {name: string}) {
+    const existingSeries = await listExistingTvSeries();
+    return (
+      existingSeries.find(series => series.toLowerCase() === name.toLowerCase()) ?? null
+    );
+  }
+
+  const agent = createAgent({
+    listExistingTvSeries,
+    checkTvShowExists,
+  });
+
+  const classification = await agent.classifyTorrent({
+    name: torrent.name,
+    fileNames,
+  });
 
   console.log(classification);
+
+  const telegramMessage = formatTelegramMessage(torrent.name, classification);
+  await notifyTelegram(telegramMessage);
 }
 
 main();

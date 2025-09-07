@@ -1,8 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig.json",
-  "extends": "fastify-tsconfig",
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "node",
     "sourceMap": true,
