@@ -6,7 +6,7 @@
   "scripts": {
     "test": "vitest",
     "start": "node dist/index.js",
-    "build": "tsc",
+    "build": "tsdown",
     "dev": "tsx src/index.ts"
   },
   "license": "MIT",
@@ -26,6 +26,7 @@
     "prettier": "^3.6.2",
     "tsx": "^4.20.5",
     "typescript": "^5.3.3",
+    "tsdown": "^0.14.2",
     "vitest": "^2.0.0"
   },
   "volta": {
