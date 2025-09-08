@@ -10,7 +10,7 @@ const notPartOfTorrent = z
 const filePath = z
   .string()
   .describe(
-    'The media physical file path. Will be used to relocate the file so it MUST be a proper path.'
+    'The media physical file path (.mkv, .mp4, .avi, etc). Will be used to relocate the file so it MUST be a proper path.'
   );
 
 export const movieFileSchema = z
@@ -96,8 +96,8 @@ Rules for categorization:
 
  - For TV Series you should first check if the name of TV Series exists so we know
    we're orgaizing our episodes into an existing folder. If it doesn't you
-   should check the list of all existing TV Series on my harddrive to see you may
-   have inferend the name of the Series incorrectly.
+   should check the list of all existing TV Series on my harddrive to see if
+   you may have inferend the name of the Series incorrectly.
 
  - If you're not ABSOLUTELY sure of the name of the series or movie, use the
    webSearchTool to verify. For example if the movie contains a year in the
@@ -105,8 +105,9 @@ Rules for categorization:
    of the movie should have the year in the title.
 
  - Only consider actual video files with common extensions (.mp4, .mkv, .avi,
-   .mov, etc.) for the final list of files. Skip things like ISOs, EXEs, text
-   files, .nfo files, archive files, images, subtitles, etc.
+   etc.) for the final list of files. Files such as ISOs, EXEs, text files,
+   .nfo files, .rar files, images, subtitles, etc should NEVER appear as a
+   'filePath' in the final output list.
 
 Examples scenarios:
 
@@ -131,7 +132,8 @@ Examples scenarios:
  - "Toy.Story/Toy.Story.rar"
     → Extract using unrar_file tool
     → Tool returns ["Toy.Story/Toy.Story.mkv"], this list of files is
-      considered with the rest of the torrents files
+      considered with the rest of the torrents files. Do NOT include the
+      archive itself in the final list.
     → type: "movie",
       title: "Toy Story",
       filePath: "Toy.Story/Toy.Story.mkv", (Note this is NOT the .rar file!)
