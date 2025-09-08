@@ -84,7 +84,7 @@ Preprocessing the file list:
    the unrar_file tool to extract the archive and receive a list of extracted
    media files. Take those files into considration. If any of the files are
    considered as media for our final file list, be sure to set the filePath as the
-   extracted file.
+   extracted file, not the source archive.
 
 Rules for categorization:
 
@@ -167,6 +167,7 @@ export function createAgent(config: AgentConfig) {
 
   const agent = new Agent({
     name: 'Torrent Organizer',
+    model: 'gpt-5-mini',
     instructions: INSTRUCTIONS,
     tools: [checkTvShowExists, listExistingTvSeries, unrarFile, webSearchTool()],
     outputType: classificationSchema,
