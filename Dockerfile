@@ -1,12 +1,15 @@
 FROM debian:stable-slim
 
-RUN sed -i 's/main/main contrib non-free non-free-firmware/' /etc/apt/sources.list \
-  && apt-get update \
-  && apt-get install -y \
-  curl \
-  unrar \
-  ca-certificates \
-  --no-install-recommends
+# non-free repository needed for unrar
+RUN set -eux; \
+  codename="$(. /etc/os-release; echo "$VERSION_CODENAME")"; \
+  comps="main contrib non-free non-free-firmware"; \
+  echo "deb http://deb.debian.org/debian ${codename} ${comps}" > /etc/apt/sources.list.d/non-free.list; \
+  echo "deb http://deb.debian.org/debian ${codename}-updates ${comps}" >> /etc/apt/sources.list.d/non-free.list; \
+  echo "deb http://security.debian.org/debian-security ${codename}-security ${comps}" >> /etc/apt/sources.list.d/non-free.list; \
+  apt-get update; \
+  apt-get install -y unrar curl ca-certificates --no-install-recommends; \
+  rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
