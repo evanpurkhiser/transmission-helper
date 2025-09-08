@@ -68,7 +68,9 @@ check the list of all existing TV Series on my harddrive to see you may have
 inferend the name of the Series incorrectly.
 
 If you're not ABSOLUTELY sure of the name of the seriers or movie, make a web
-search to verify.
+search to verify. For example if the movie contains a year in the title, it may
+be a remake of a movie released many years ago, and this version of the movie
+should have the year in the title.
 
 Examples:
 - "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP" → Movie: "The Dark Knight"
