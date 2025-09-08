@@ -36,11 +36,11 @@ function formatSeriesFiles(seriesName: string, files: SeriesFile[]) {
 
   const seasonList = items.map(label => `${label}`).join('\n');
 
-  return `📺 ${seriesName}\n${seasonList}`;
+  return `📺 ${escapeMarkdown(seriesName)}\n${seasonList}`;
 }
 
 function formatMovieFiles(files: MovieFile[]) {
-  return files.map(movieFile => `🎬 ${movieFile.title}`).join('\n');
+  return files.map(movieFile => `🎬 ${escapeMarkdown(movieFile.title)}`).join('\n');
 }
 
 export function formatTorrentResults(options: FormatTorrentResultOptions): string {
