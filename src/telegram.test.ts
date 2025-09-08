@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
 
 import {ClassificationResult} from './agent';
+import {HardLinkResult} from './files';
 import {formatTorrentResults} from './telegram';
 
 describe('formatTelegramMessage', () => {
@@ -36,7 +37,13 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults({torrentName, classification});
+    const linkResults: HardLinkResult = {
+      linked: [{sourceFile: 'test1.mkv', linkPath: '/movies/test1.mkv'}],
+      exists: [],
+      errors: [],
+    };
+
+    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: true});
 
     expect(result).toBe(
       [
@@ -46,6 +53,9 @@ describe('formatTelegramMessage', () => {
         '',
         '📺 Breaking Bad',
         'Season 1 Episode 1→3',
+        '',
+        '🔗 Linked: 1 files',
+        '📁 Torrent moved to seeding directory',
       ].join('\n')
     );
   });
@@ -63,7 +73,13 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults({torrentName, classification});
+    const linkResults: HardLinkResult = {
+      linked: [],
+      exists: [],
+      errors: [],
+    };
+
+    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
 
     expect(result).toBe(
       [
@@ -72,6 +88,8 @@ describe('formatTelegramMessage', () => {
         '*The\\.Dark\\.Knight\\.2008\\.1080p\\.BluRay*\nChristopher Nolan Batman film',
         '',
         '🎬 The Dark Knight',
+        '',
+        '⚠️ Torrent left in download directory',
       ].join('\n')
     );
   });
@@ -108,7 +126,13 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults({torrentName, classification});
+    const linkResults: HardLinkResult = {
+      linked: [],
+      exists: [],
+      errors: [],
+    };
+
+    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
 
     expect(result).toBe(
       [
@@ -122,6 +146,8 @@ describe('formatTelegramMessage', () => {
         '',
         '📺 Better Call Saul',
         'Season 1 Episode 1',
+        '',
+        '⚠️ Torrent left in download directory',
       ].join('\n')
     );
   });
@@ -152,7 +178,13 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults({torrentName, classification});
+    const linkResults: HardLinkResult = {
+      linked: [],
+      exists: [],
+      errors: [],
+    };
+
+    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
 
     expect(result).toBe(
       [
@@ -164,6 +196,8 @@ describe('formatTelegramMessage', () => {
         'Season 1 Episode 1',
         '🎬 Inception',
         '🎬 Interstellar',
+        '',
+        '⚠️ Torrent left in download directory',
       ].join('\n')
     );
   });
@@ -175,7 +209,13 @@ describe('formatTelegramMessage', () => {
       files: [],
     };
 
-    const result = formatTorrentResults({torrentName, classification});
+    const linkResults: HardLinkResult = {
+      linked: [],
+      exists: [],
+      errors: [],
+    };
+
+    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
 
     expect(result).toBe(
       [
@@ -183,6 +223,8 @@ describe('formatTelegramMessage', () => {
         '',
         '*Empty\\.Torrent*\nNo relevant files found',
         '',
+        '',
+        '⚠️ Torrent left in download directory',
       ].join('\n')
     );
   });
@@ -227,7 +269,13 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults({torrentName, classification});
+    const linkResults: HardLinkResult = {
+      linked: [],
+      exists: [],
+      errors: [],
+    };
+
+    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
 
     expect(result).toBe(
       [
@@ -237,6 +285,8 @@ describe('formatTelegramMessage', () => {
         '',
         '📺 Game of Thrones',
         'Season 1 Episode 1→3, 5',
+        '',
+        '⚠️ Torrent left in download directory',
       ].join('\n')
     );
   });
@@ -289,7 +339,13 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const result = formatTorrentResults({torrentName, classification});
+    const linkResults: HardLinkResult = {
+      linked: [],
+      exists: [],
+      errors: [],
+    };
+
+    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
 
     expect(result).toBe(
       [
@@ -299,6 +355,8 @@ describe('formatTelegramMessage', () => {
         '',
         '📺 Test Series',
         'Season 2 Episode 1→2, 9→11',
+        '',
+        '⚠️ Torrent left in download directory',
       ].join('\n')
     );
   });

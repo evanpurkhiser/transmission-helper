@@ -9,8 +9,8 @@ import {HardLinkResult} from './files';
 export interface FormatTorrentResultOptions {
   torrentName: string;
   classification: ClassificationResult;
-  linkResults?: HardLinkResult;
-  wasMoved?: boolean;
+  linkResults: HardLinkResult;
+  wasMoved: boolean;
 }
 
 function stringRange(nums: number[]): string[] {
@@ -70,30 +70,24 @@ export function formatTorrentResults(options: FormatTorrentResultOptions): strin
     lines.push(movieList);
   }
 
-  if (linkResults) {
-    lines.push('');
+  lines.push('');
 
-    if (linkResults.linked.length > 0) {
-      lines.push(`🔗 Linked: ${linkResults.linked.length} files`);
-    }
-
-    if (linkResults.exists.length > 0) {
-      lines.push(`⚠️ Skipped: ${linkResults.exists.length} files \\(already exist\\)`);
-    }
-
-    if (linkResults.errors.length > 0) {
-      lines.push(`❌ Errors: ${linkResults.errors.length} files`);
-    }
+  if (linkResults.linked.length > 0) {
+    lines.push(`🔗 Linked: ${linkResults.linked.length} files`);
   }
 
-  if (wasMoved !== undefined) {
-    lines.push('');
+  if (linkResults.exists.length > 0) {
+    lines.push(`⚠️ Skipped: ${linkResults.exists.length} files \\(already exist\\)`);
+  }
 
-    if (wasMoved) {
-      lines.push('📁 Torrent moved to seeding directory');
-    } else {
-      lines.push('⚠️ Torrent left in download directory');
-    }
+  if (linkResults.errors.length > 0) {
+    lines.push(`❌ Errors: ${linkResults.errors.length} files`);
+  }
+
+  if (wasMoved) {
+    lines.push('📁 Torrent moved to seeding directory');
+  } else {
+    lines.push('⚠️ Torrent left in download directory');
   }
 
   return lines.join('\n');
