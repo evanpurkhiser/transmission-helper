@@ -1,4 +1,4 @@
-import {Agent, run, tool} from '@openai/agents';
+import {Agent, run, tool, webSearchTool} from '@openai/agents';
 import {z} from 'zod';
 
 import {TorrentInfo} from './types';
@@ -66,6 +66,9 @@ we're orgaizing our episodes into an existing folder. If it doesn't you should
 check the list of all existing TV Series on my harddrive to see you may have
 inferend the name of the Series incorrectly.
 
+If you're not ABSOLUTELY sure of the name of the seriers or movie, make a web
+search to verify.
+
 Examples:
 - "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP" → Movie: "The Dark Knight"
 - "Breaking.Bad.S01E01.Pilot.1080p.WEB-DL.x264" → TV: series="Breaking Bad", season=1, episode=1, title="Pilot"
@@ -95,7 +98,7 @@ export function createAgent(config: AgentConfig) {
   const agent = new Agent({
     name: 'Torrent Organizer',
     instructions: INSTRUCTIONS,
-    tools: [checkTvShowExists, listExistingTvSeries],
+    tools: [checkTvShowExists, listExistingTvSeries, webSearchTool()],
     outputType: classificationSchema,
   });
 
