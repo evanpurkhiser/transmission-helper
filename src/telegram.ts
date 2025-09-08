@@ -79,7 +79,7 @@ export function formatTorrentResults(options: FormatTorrentResultOptions): strin
     lines.push(`🔗 Linked: ${organized.linked.length} files`);
   }
   if (organized.moved.length > 0) {
-    lines.push(`🗂️ Moved: ${organized.linked.length} files`);
+    lines.push(`🗂️ Moved: ${organized.moved.length} files`);
   }
   if (organized.exists.length > 0) {
     lines.push(`⚠️ Skipped: ${organized.exists.length} files \\(already exist\\)`);
