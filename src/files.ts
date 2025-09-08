@@ -16,6 +16,10 @@ export interface OrganizationResult {
   linked: string[];
   exists: string[];
   errors: Array<{filePath: string; error: string}>;
+  /**
+   * Were all torrent files successfully organized
+   */
+  success: boolean;
 }
 
 export async function organizeFiles(
@@ -29,13 +33,12 @@ export async function organizeFiles(
     linked: [],
     exists: [],
     errors: [],
+    success: true,
   };
 
-  async function organizeFile(
-    torrentPath: string,
-    file: ClassifiedFile,
-    config: Config
-  ): Promise<'linked' | 'moved' | 'exists'> {
+  type Organization = 'linked' | 'moved' | 'exists';
+
+  async function organizeFile(file: ClassifiedFile): Promise<Organization> {
     const fullSourcePath = join(torrentPath, file.filePath);
     let targetPath: string | null = null;
 
@@ -83,18 +86,21 @@ export async function organizeFiles(
     return 'linked';
   }
 
-  for (const file of files) {
+  async function safeOrganize(file: ClassifiedFile) {
     const {filePath} = file;
 
     try {
-      const status = await organizeFile(torrentPath, file, config);
+      const status = await organizeFile(file);
       result[status].push(filePath);
     } catch (error) {
+      result.success = false;
       result.errors.push({filePath, error: String(error)});
       console.error(`Failed to hard link ${join(torrentPath, file.filePath)}:`, error);
       captureException(error);
     }
   }
+
+  await Promise.all(files.map(file => safeOrganize(file)));
 
   return result;
 }
