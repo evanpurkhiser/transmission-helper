@@ -104,9 +104,10 @@ export function formatFailedClassification(torrentName: string): string {
 }
 
 export function formatTorrentFinished(torrentName: string): string {
-  return ['📥 Processing finished torrent...', `*${escapeMarkdown(torrentName)}*`].join(
-    '\n'
-  );
+  return [
+    escapeMarkdown('📥 Processing finished torrent...'),
+    `*${escapeMarkdown(torrentName)}*`,
+  ].join('\n');
 }
 
 export async function notifyTelegram(text: string, config: Config) {
