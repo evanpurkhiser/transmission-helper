@@ -1,4 +1,3 @@
-import {captureException} from '@sentry/node';
 import {groupBy} from 'es-toolkit';
 import {ofetch} from 'ofetch';
 import {escapeMarkdown} from 'telegram-escape';
