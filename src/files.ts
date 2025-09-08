@@ -11,6 +11,13 @@ import {Config} from './config';
 
 const execAsync = promisify(exec);
 
+function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[/\\\0]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export interface OrganizationResult {
   moved: string[];
   linked: string[];
@@ -39,14 +46,15 @@ export async function organizeFiles(
 
     if (file.type === 'movie') {
       const ext = extname(file.filePath);
-      const fileName = `${file.title}${ext}`;
+      const fileName = `${sanitizeFilename(file.title)}${ext}`;
       targetPath = join(config.MOVIES_DIR, fileName);
     }
 
     if (file.type === 'series') {
       const ext = extname(file.filePath);
       const seasonDir = `Season ${file.season}`;
-      const seasonPath = join(config.TV_SERIES_DIR, file.seriesTitle, seasonDir);
+      const sanitizedSeriesTitle = sanitizeFilename(file.seriesTitle);
+      const seasonPath = join(config.TV_SERIES_DIR, sanitizedSeriesTitle, seasonDir);
 
       if (!existsSync(seasonPath)) {
         await mkdir(seasonPath, {recursive: true});
