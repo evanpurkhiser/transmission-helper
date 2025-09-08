@@ -7,13 +7,19 @@ const notPartOfTorrent = z
   .boolean()
   .describe('Indicates this file was not part of the torrent contents');
 
+const filePath = z
+  .string()
+  .describe(
+    'The media physical file path. Will be used to relocate the file so it MUST be a proper path.'
+  );
+
 export const movieFileSchema = z
   .object({
     type: z.literal('movie'),
     title: z
       .string()
       .describe('Clean movie title without quality indicators, year, or release info'),
-    filePath: z.string().describe('The media file path for the movie'),
+    filePath,
     notPartOfTorrent,
   })
   .strict();
@@ -30,7 +36,7 @@ export const seriesFileSchema = z
       .string()
       .nullable()
       .describe('Clean episode title if available, otherwise null'),
-    filePath: z.string().describe('The media file path for the episode'),
+    filePath,
     notPartOfTorrent,
   })
   .strict();
@@ -103,15 +109,29 @@ Rules for categorization:
    files, .nfo files, archive files, images, subtitles, etc.
 
 Examples:
- - "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP" → Movie: "The Dark Knight"
- - "Breaking.Bad.S01E01.Pilot.1080p.WEB-DL.x264" → TV: series="Breaking Bad", season=1, episode=1, title="Pilot"
- - "ubuntu-22.04.3-desktop-amd64.iso" → Skip (not media)
- - "Sample.mkv" → Skip (sample file)
+ - "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP.mkv"
+   → Movie title: "The Dark Knight"
+     filePath: "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP.mkv"
+
+ - "Breaking.Bad.S01E01.Pilot.1080p.WEB-DL.x264/S01E01.mkv"
+   → TV Series: "Breaking Bad"
+     season: 1
+     episode: 1
+     filePath: "Breaking.Bad.S01E01.Pilot.1080p.WEB-DL.x264/S01E01.mkv"
+
+ - "ubuntu-22.04.3-desktop-amd64.iso"
+   → Skipped (not media)
+
+ - "Sample.mkv"
+   → Skip (sample file)
+
  - "Toy.Story/Toy.Story.rar"
-    → Extract using unrar_file tool
-    → Analyze contained media file 
+    → Extract using unrar_file tool, consider returned file ["Toy.Story/Toy.Story.mvk"]
     → Movie: "Toy Story"
- - "A Star Is Born (1976) 
+      filePath: "Toy.Story/Toy.Story.mkv" (not the rar file path)
+      notPartOfTorrent: true
+
+ - "A.Star.Is.Born.1976.mkv"
     → Web Search "a star is born" to see if the year is an important factor
     → Movie: "A Star Is Born (1976)" (there were multiple remakes with the same name)
 `;
