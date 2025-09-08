@@ -68,7 +68,8 @@ async function main() {
   const {moved, linked, exists, errors} = organized;
 
   // Only move torrents if we successfully organize the torrent
-  const moveTorrent = [...moved, ...linked, ...exists].length > 0 && errors.length === 0;
+  const moveTorrent =
+    [...moved, ...linked].length > 0 && errors.length === 0 && exists.length === 0;
 
   if (moveTorrent && !!config.MOVE_COMPLETE_DIR) {
     await client.moveTorrent(torrentId, config.MOVE_COMPLETE_DIR);
