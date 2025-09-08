@@ -108,15 +108,18 @@ Rules for categorization:
    .mov, etc.) for the final list of files. Skip things like ISOs, EXEs, text
    files, .nfo files, archive files, images, subtitles, etc.
 
-Examples:
+Examples scenarios:
+
  - "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP.mkv"
-   → Movie title: "The Dark Knight"
+   → type: "movie",
+     title: "The Dark Knight",
      filePath: "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP.mkv"
 
  - "Breaking.Bad.S01E01.Pilot.1080p.WEB-DL.x264/S01E01.mkv"
-   → TV Series: "Breaking Bad"
-     season: 1
-     episode: 1
+   → type: "series",
+     seriesTitle: "Breaking Bad",
+     season: 1,
+     episode: 1,
      filePath: "Breaking.Bad.S01E01.Pilot.1080p.WEB-DL.x264/S01E01.mkv"
 
  - "ubuntu-22.04.3-desktop-amd64.iso"
@@ -126,14 +129,18 @@ Examples:
    → Skip (sample file)
 
  - "Toy.Story/Toy.Story.rar"
-    → Extract using unrar_file tool, consider returned file ["Toy.Story/Toy.Story.mvk"]
-    → Movie: "Toy Story"
-      filePath: "Toy.Story/Toy.Story.mkv" (not the rar file path)
+    → Extract using unrar_file tool
+    → Tool returns ["Toy.Story/Toy.Story.mkv"], this list of files is
+      considered with the rest of the torrents files
+    → type: "movie",
+      title: "Toy Story",
+      filePath: "Toy.Story/Toy.Story.mkv", (Note this is NOT the .rar file!)
       notPartOfTorrent: true
 
  - "A.Star.Is.Born.1976.mkv"
     → Web Search "a star is born" to see if the year is an important factor
-    → Movie: "A Star Is Born (1976)" (there were multiple remakes with the same name)
+    → type: "movie",
+      title: "A Star Is Born (1976)" (there were multiple remakes with the same name)
 `;
 
 export function createAgent(config: AgentConfig) {
