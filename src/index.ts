@@ -35,10 +35,8 @@ async function main() {
   }
 
   async function checkTvShowExists({name}: {name: string}) {
-    const existingSeries = await listExistingTvSeries();
-    return (
-      existingSeries.find(series => series.toLowerCase() === name.toLowerCase()) ?? null
-    );
+    const series = await listExistingTvSeries();
+    return series.find(s => s.toLowerCase() === name.toLowerCase()) ?? null;
   }
 
   const agent = createAgent({

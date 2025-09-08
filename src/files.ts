@@ -1,3 +1,5 @@
+import {captureException} from '@sentry/node';
+
 import {exec} from 'child_process';
 import {existsSync} from 'fs';
 import {link, mkdir, rename} from 'fs/promises';
@@ -86,6 +88,7 @@ export async function organizeFiles(
     } catch (error) {
       result.errors.push({filePath, error: String(error)});
       console.error(`Failed to hard link ${join(torrentPath, file.filePath)}:`, error);
+      captureException(error);
     }
   }
 
@@ -114,6 +117,7 @@ export async function unrarFile(
     return fileList;
   } catch (error) {
     console.error(`Failed to extract RAR file ${rarFilePath}:`, error);
+    captureException(error);
     return [];
   }
 }

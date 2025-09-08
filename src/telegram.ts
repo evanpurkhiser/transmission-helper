@@ -1,3 +1,4 @@
+import {captureException} from '@sentry/node';
 import {groupBy} from 'es-toolkit';
 import {ofetch} from 'ofetch';
 import {escapeMarkdown} from 'telegram-escape';
@@ -123,11 +124,6 @@ export async function notifyTelegram(text: string, config: Config) {
     headers: {'content-type': 'application/json'},
   };
 
-  try {
-    await ofetch(`https://api.telegram.org/bot${token}/sendMessage`, options);
-  } catch (error) {
-    console.error('Failed to send telegram notification', error.data);
-  }
-
+  await ofetch(`https://api.telegram.org/bot${token}/sendMessage`, options);
   return null;
 }
