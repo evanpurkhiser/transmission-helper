@@ -38,6 +38,7 @@ export const classificationSchema = z
   .object({
     files: z.array(fileSchema).describe('List of relevant files within the torrent.'),
     description: z.string().describe('A short description of this torrent'),
+    icon: z.string().describe('A single emoji representing the series'),
   })
   .strict();
 

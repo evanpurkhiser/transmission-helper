@@ -48,7 +48,8 @@ export function formatTorrentResults(options: FormatTorrentResultOptions): strin
   const lines = [
     '📥 Finished torrent download',
     '',
-    `*${escapeMarkdown(torrentName)}*\n${escapeMarkdown(classification.description)}`,
+    `${escapeMarkdown(classification.icon)} *${escapeMarkdown(torrentName)}*\n`,
+    `${escapeMarkdown(classification.description)}`,
     '',
   ];
 
