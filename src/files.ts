@@ -3,7 +3,7 @@ import {link, mkdir} from 'fs/promises';
 import {extname, join} from 'path';
 
 import {ClassifiedFile} from './agent';
-import {config} from './config';
+import {Config} from './config';
 
 export interface HardLinkResult {
   linked: string[];
@@ -13,7 +13,8 @@ export interface HardLinkResult {
 
 async function linkFile(
   torrentPath: string,
-  file: ClassifiedFile
+  file: ClassifiedFile,
+  config: Config
 ): Promise<'linked' | 'exists'> {
   const fullSourcePath = join(torrentPath, file.filePath);
   let targetPath: string | null = null;
@@ -57,7 +58,8 @@ async function linkFile(
 
 export async function hardLinkFiles(
   torrentPath: string,
-  files: ClassifiedFile[]
+  files: ClassifiedFile[],
+  config: Config
 ): Promise<HardLinkResult> {
   const result: HardLinkResult = {
     linked: [],
@@ -69,7 +71,7 @@ export async function hardLinkFiles(
     const {filePath} = file;
 
     try {
-      const status = await linkFile(torrentPath, file);
+      const status = await linkFile(torrentPath, file, config);
       result[status].push(filePath);
     } catch (error) {
       result.errors.push({filePath, error: String(error)});

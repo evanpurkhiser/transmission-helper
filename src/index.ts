@@ -5,7 +5,7 @@ import {init} from '@sentry/node';
 import {readdir} from 'fs/promises';
 
 import {createAgent} from './agent';
-import {config} from './config';
+import {createConfig} from './config';
 import {hardLinkFiles} from './files';
 import {
   formatFailedClassification,
@@ -13,9 +13,10 @@ import {
   notifyTelegram,
 } from './telegram';
 
-init({dsn: config.SENTRY_DSN});
-
 async function main() {
+  const config = createConfig(process.env);
+
+  init({dsn: config.SENTRY_DSN});
   setDefaultOpenAIKey(config.OPENAI_API_KEY!);
 
   const client = new Transmission({
@@ -51,11 +52,11 @@ async function main() {
   });
 
   if (classification === undefined) {
-    await notifyTelegram(formatFailedClassification(torrent.name));
+    await notifyTelegram(formatFailedClassification(torrent.name), config);
     return;
   }
 
-  const linkResults = await hardLinkFiles(torrent.savePath, classification.files);
+  const linkResults = await hardLinkFiles(torrent.savePath, classification.files, config);
 
   const moveTorrent =
     linkResults.errors.length === 0 &&
@@ -71,7 +72,7 @@ async function main() {
     linkResults,
     wasMoved: moveTorrent && !!config.MOVE_COMPLETE_DIR,
   });
-  await notifyTelegram(telegramMessage);
+  await notifyTelegram(telegramMessage, config);
 }
 
 main();

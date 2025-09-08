@@ -32,4 +32,8 @@ const configSchema = z.object({
     .describe('Directory to move completed torrents into'),
 });
 
-export const config = configSchema.parse(process.env);
+export type Config = z.infer<typeof configSchema>;
+
+export function createConfig(env: Record<string, string | undefined>): Config {
+  return configSchema.parse(env);
+}

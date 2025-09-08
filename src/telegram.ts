@@ -3,7 +3,7 @@ import {ofetch} from 'ofetch';
 import {escapeMarkdown} from 'telegram-escape';
 
 import {ClassificationResult, MovieFile, SeriesFile} from './agent';
-import {config} from './config';
+import {Config} from './config';
 import {HardLinkResult} from './files';
 
 export interface FormatTorrentResultOptions {
@@ -109,7 +109,7 @@ export function formatFailedClassification(torrentName: string): string {
   ].join('\n');
 }
 
-export async function notifyTelegram(text: string) {
+export async function notifyTelegram(text: string, config: Config) {
   const token = config.TELEGRAM_TOKEN;
   const chatId = config.TELEGRAM_CHAT_ID;
 
