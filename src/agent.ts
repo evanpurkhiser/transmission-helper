@@ -12,7 +12,6 @@ export const movieFileSchema = z
     filePath: z.string().describe('The original file path from the torrent'),
     notPartOfTorrent: z
       .boolean()
-      .optional()
       .describe('Indicates this movie file was not part of the torrent contents'),
   })
   .strict();
@@ -32,7 +31,6 @@ export const seriesFileSchema = z
     filePath: z.string().describe('The original file path from the torrent'),
     notPartOfTorrent: z
       .boolean()
-      .optional()
       .describe('Indicates this episode file was not part of the torrent contents'),
   })
   .strict();

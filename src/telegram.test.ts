@@ -18,6 +18,7 @@ describe('formatTelegramMessage', () => {
           episode: 1,
           episodeTitle: 'Pilot',
           filePath: 'Breaking.Bad.S01E01.Pilot.1080p.BluRay.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -26,6 +27,7 @@ describe('formatTelegramMessage', () => {
           episode: 2,
           episodeTitle: 'Cat in the Bag...',
           filePath: 'Breaking.Bad.S01E02.Cat.in.the.Bag.1080p.BluRay.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -34,6 +36,7 @@ describe('formatTelegramMessage', () => {
           episode: 3,
           episodeTitle: "...and the Bag's in the River",
           filePath: 'Breaking.Bad.S01E03.And.the.Bags.in.the.River.1080p.BluRay.mkv',
+          notPartOfTorrent: false,
         },
       ],
     };
@@ -79,6 +82,7 @@ describe('formatTelegramMessage', () => {
           type: 'movie',
           title: 'The Dark Knight',
           filePath: 'The.Dark.Knight.2008.1080p.BluRay.mkv',
+          notPartOfTorrent: false,
         },
       ],
     };
@@ -125,6 +129,7 @@ describe('formatTelegramMessage', () => {
           episode: 1,
           episodeTitle: 'Pilot',
           filePath: 'Breaking.Bad.S01E01.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -133,6 +138,7 @@ describe('formatTelegramMessage', () => {
           episode: 1,
           episodeTitle: 'Seven Thirty-Seven',
           filePath: 'Breaking.Bad.S02E01.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -141,6 +147,7 @@ describe('formatTelegramMessage', () => {
           episode: 1,
           episodeTitle: 'Uno',
           filePath: 'Better.Call.Saul.S01E01.mkv',
+          notPartOfTorrent: false,
         },
       ],
     };
@@ -189,6 +196,7 @@ describe('formatTelegramMessage', () => {
           type: 'movie',
           title: 'Inception',
           filePath: 'Inception.2010.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -197,11 +205,13 @@ describe('formatTelegramMessage', () => {
           episode: 1,
           episodeTitle: 'The Original',
           filePath: 'Westworld.S01E01.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'movie',
           title: 'Interstellar',
           filePath: 'Interstellar.2014.mkv',
+          notPartOfTorrent: false,
         },
       ],
     };
@@ -287,6 +297,7 @@ describe('formatTelegramMessage', () => {
           episode: 1,
           episodeTitle: 'Winter Is Coming',
           filePath: 'GoT.S01E01.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -295,6 +306,7 @@ describe('formatTelegramMessage', () => {
           episode: 2,
           episodeTitle: 'The Kingsroad',
           filePath: 'GoT.S01E02.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -303,6 +315,7 @@ describe('formatTelegramMessage', () => {
           episode: 3,
           episodeTitle: 'Lord Snow',
           filePath: 'GoT.S01E03.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -311,6 +324,7 @@ describe('formatTelegramMessage', () => {
           episode: 5,
           episodeTitle: 'The Wolf and the Lion',
           filePath: 'GoT.S01E05.mkv',
+          notPartOfTorrent: false,
         },
       ],
     };
@@ -358,6 +372,7 @@ describe('formatTelegramMessage', () => {
           episode: 10,
           episodeTitle: 'Episode 10',
           filePath: 'Test.S02E10.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -366,6 +381,7 @@ describe('formatTelegramMessage', () => {
           episode: 1,
           episodeTitle: 'Episode 1',
           filePath: 'Test.S02E01.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -374,6 +390,7 @@ describe('formatTelegramMessage', () => {
           episode: 11,
           episodeTitle: 'Episode 11',
           filePath: 'Test.S02E11.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -382,6 +399,7 @@ describe('formatTelegramMessage', () => {
           episode: 2,
           episodeTitle: 'Episode 2',
           filePath: 'Test.S02E02.mkv',
+          notPartOfTorrent: false,
         },
         {
           type: 'series',
@@ -390,6 +408,7 @@ describe('formatTelegramMessage', () => {
           episode: 9,
           episodeTitle: 'Episode 9',
           filePath: 'Test.S02E09.mkv',
+          notPartOfTorrent: false,
         },
       ],
     };
