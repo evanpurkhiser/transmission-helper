@@ -32,11 +32,9 @@ function formatSeriesFiles(seriesName: string, files: SeriesFile[]) {
       season,
       stringRange(files.map(file => file.episode).toSorted((a, b) => a - b)).join(', '),
     ])
-    .map(([season, episodeList]) => `Season ${season} Episode ${episodeList}`);
+    .map(([season, episodeList]) => `- Season ${season} Episode ${episodeList}`);
 
-  const seasonList = items.map(label => `${label}`).join('\n');
-
-  return `📺 ${escapeMarkdown(seriesName)}\n${seasonList}`;
+  return `📺 ${escapeMarkdown(seriesName)}\n${items.join('\n')}`;
 }
 
 function formatMovieFiles(files: MovieFile[]) {
@@ -46,17 +44,15 @@ function formatMovieFiles(files: MovieFile[]) {
 export function formatTorrentResults(options: FormatTorrentResultOptions): string {
   const {torrentName, classification, organized, torrentMoved} = options;
   const lines = [
-    '📥 Finished torrent download',
+    `*${escapeMarkdown(torrentName)}*`,
     '',
-    `${escapeMarkdown(classification.icon)} *${escapeMarkdown(torrentName)}*\n`,
-    `${escapeMarkdown(classification.description)}`,
+    `${escapeMarkdown(classification.icon)} ${escapeMarkdown(classification.description)}`,
     '',
   ];
 
   const series = classification.files.filter(f => f.type === 'series');
   const movies = classification.files.filter(f => f.type === 'movie');
 
-  // Group series together
   const seriesList = Object.entries(groupBy(series, file => file.seriesTitle))
     .map(([seriesName, files]) => formatSeriesFiles(seriesName, files))
     .join('\n\n');
@@ -71,21 +67,24 @@ export function formatTorrentResults(options: FormatTorrentResultOptions): strin
     lines.push(movieList);
   }
 
-  if (organized.errors || organized.exists || organized.linked) {
-    lines.push('');
-  }
+  const {errors, exists, linked, moved} = organized;
 
-  if (organized.linked.length > 0) {
-    lines.push(`🔗 Linked: ${organized.linked.length} files`);
+  if (linked.length > 0) {
+    lines.push(`🔗 Linked: ${linked.length} files`);
   }
-  if (organized.moved.length > 0) {
-    lines.push(`🗂️ Moved: ${organized.moved.length} files`);
+  if (moved.length > 0) {
+    lines.push(`🗂️ Moved: ${moved.length} files`);
   }
-  if (organized.exists.length > 0) {
-    lines.push(`⚠️ Skipped: ${organized.exists.length} files \\(already exist\\)`);
+  if (exists.length > 0) {
+    lines.push(`⚠️ Skipped: ${exists.length} files \\(already exist\\)`);
   }
-  if (organized.errors.length > 0) {
-    lines.push(`❌ Errors: ${organized.errors.length} files`);
+  if (errors.length > 0) {
+    lines.push(
+      `**> ❌ Errors: ${errors.length} files`,
+      '>',
+      ...errors.map(i => `> - ${i.error}`),
+      ''
+    );
   }
 
   if (torrentMoved) {
@@ -94,17 +93,20 @@ export function formatTorrentResults(options: FormatTorrentResultOptions): strin
     lines.push('⚠️ Torrent left in download directory');
   }
 
-  return lines.join('\n');
+  return lines.join('\n').replace(/\n\n\n+/, '\n\n');
 }
 
 export function formatFailedClassification(torrentName: string): string {
   return [
-    '📥 Finished torrent download',
-    '',
-    `*${escapeMarkdown(torrentName)}*`,
-    '',
     '⚠️ AI failed to classify the torrent',
+    `*${escapeMarkdown(torrentName)}*`,
   ].join('\n');
+}
+
+export function formatTorrentFinished(torrentName: string): string {
+  return ['📥 Processing finished torrent...', `*${escapeMarkdown(torrentName)}*`].join(
+    '\n'
+  );
 }
 
 export async function notifyTelegram(text: string, config: Config) {

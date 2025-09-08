@@ -9,6 +9,7 @@ import {createConfig} from './config';
 import {organizeFiles, unrarFile} from './files';
 import {
   formatFailedClassification,
+  formatTorrentFinished,
   formatTorrentResults,
   notifyTelegram,
 } from './telegram';
@@ -27,6 +28,8 @@ async function main() {
 
   const torrentId = config.TORRENT_HASH;
   const torrent = await client.getTorrent(torrentId);
+
+  await notifyTelegram(formatTorrentFinished(torrent.name), config);
 
   const fileNames = torrent.raw.files.map((file: any) => file.name);
 
@@ -62,9 +65,10 @@ async function main() {
     config
   );
 
-  const moveTorrent =
-    organized.errors.length === 0 &&
-    organized.linked.length + organized.exists.length > 0;
+  const {moved, linked, exists, errors} = organized;
+
+  // Only move torrents if we successfully organize the torrent
+  const moveTorrent = [...moved, ...linked, ...exists].length > 0 && errors.length === 0;
 
   if (moveTorrent && !!config.MOVE_COMPLETE_DIR) {
     await client.moveTorrent(torrentId, config.MOVE_COMPLETE_DIR);

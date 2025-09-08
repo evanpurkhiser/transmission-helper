@@ -16,10 +16,6 @@ export interface OrganizationResult {
   linked: string[];
   exists: string[];
   errors: Array<{filePath: string; error: string}>;
-  /**
-   * Were all torrent files successfully organized
-   */
-  success: boolean;
 }
 
 export async function organizeFiles(
@@ -33,7 +29,6 @@ export async function organizeFiles(
     linked: [],
     exists: [],
     errors: [],
-    success: true,
   };
 
   type Organization = 'linked' | 'moved' | 'exists';
@@ -93,7 +88,6 @@ export async function organizeFiles(
       const status = await organizeFile(file);
       result[status].push(filePath);
     } catch (error) {
-      result.success = false;
       result.errors.push({filePath, error: String(error)});
       console.error(`Failed to hard link ${join(torrentPath, file.filePath)}:`, error);
       captureException(error);
