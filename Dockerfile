@@ -1,6 +1,7 @@
 FROM debian:stable-slim
 
-RUN apt-get update \
+RUN sed -i 's/main/main contrib non-free non-free-firmware/' /etc/apt/sources.list \
+  && apt-get update \
   && apt-get install -y \
   curl \
   unrar \
