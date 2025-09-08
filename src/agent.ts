@@ -3,16 +3,18 @@ import {z} from 'zod';
 
 import {TorrentInfo} from './types';
 
+const notPartOfTorrent = z
+  .boolean()
+  .describe('Indicates this file was not part of the torrent contents');
+
 export const movieFileSchema = z
   .object({
     type: z.literal('movie'),
     title: z
       .string()
       .describe('Clean movie title without quality indicators, year, or release info'),
-    filePath: z.string().describe('The original file path from the torrent'),
-    notPartOfTorrent: z
-      .boolean()
-      .describe('Indicates this movie file was not part of the torrent contents'),
+    filePath: z.string().describe('The media file path for the movie'),
+    notPartOfTorrent,
   })
   .strict();
 
@@ -28,10 +30,8 @@ export const seriesFileSchema = z
       .string()
       .nullable()
       .describe('Clean episode title if available, otherwise null'),
-    filePath: z.string().describe('The original file path from the torrent'),
-    notPartOfTorrent: z
-      .boolean()
-      .describe('Indicates this episode file was not part of the torrent contents'),
+    filePath: z.string().describe('The media file path for the episode'),
+    notPartOfTorrent,
   })
   .strict();
 
@@ -89,7 +89,8 @@ movie should have the year in the title.
 
 If the contents of the torrent contains a RAR archive (common in scene rips)
 use the unrar_file tool to extract the archive and receive a list of extracted
-media files. For these media files mark them with "notPartOfTorrent: true".
+media files. Take into considration if those files are the actual Movie or TV
+Series mdia. Mark them with "notPartOfTorrent: true" in those cases.
 
 Examples:
 - "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP" → Movie: "The Dark Knight"
@@ -119,7 +120,7 @@ export function createAgent(config: AgentConfig) {
 
   const unrarFile = tool({
     name: 'unrar_file',
-    description: 'Extracts files in a RAR archive and returns their paths',
+    description: 'Extracts a RAR archive and returns a list of extracted files',
     parameters: z.object({rarFilePath: z.string()}),
     strict: true,
     execute: config.unrarFile,
