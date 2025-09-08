@@ -3,10 +3,6 @@ import {z} from 'zod';
 
 import {TorrentInfo} from './types';
 
-const notPartOfTorrent = z
-  .boolean()
-  .describe('Indicates this file was not part of the torrent contents');
-
 const filePath = z
   .string()
   .describe(
@@ -20,7 +16,6 @@ export const movieFileSchema = z
       .string()
       .describe('Clean movie title without quality indicators, year, or release info'),
     filePath,
-    notPartOfTorrent,
   })
   .strict();
 
@@ -37,7 +32,6 @@ export const seriesFileSchema = z
       .nullable()
       .describe('Clean episode title if available, otherwise null'),
     filePath,
-    notPartOfTorrent,
   })
   .strict();
 
@@ -90,7 +84,7 @@ Preprocessing the file list:
    the unrar_file tool to extract the archive and receive a list of extracted
    media files. Take those files into considration. If any of the files are
    considered as media for our final file list, be sure to set the filePath as the
-   extracted file and mark it as "notPartOfTorrent: true" in those cases.
+   extracted file.
 
 Rules for categorization:
 
@@ -105,9 +99,10 @@ Rules for categorization:
    of the movie should have the year in the title.
 
  - Only consider actual video files with common extensions (.mp4, .mkv, .avi,
-   etc.) for the final list of files. Files such as ISOs, EXEs, text files,
-   .nfo files, .rar files, images, subtitles, etc should NEVER appear as a
-   'filePath' in the final output list.
+   etc.) for the final list of files.
+
+ - Files such as ISOs, EXEs, text files, .nfo files, archive files, images,
+   subtitles, etc should NEVER appear as a 'filePath' in the final output list!
 
 Examples scenarios:
 
@@ -124,20 +119,19 @@ Examples scenarios:
      filePath: "Breaking.Bad.S01E01.Pilot.1080p.WEB-DL.x264/S01E01.mkv"
 
  - "ubuntu-22.04.3-desktop-amd64.iso"
-   → Skipped (not media)
+   → Ignored (not media)
 
  - "Sample.mkv"
-   → Skip (sample file)
+   → Ignored (sample file)
 
  - "Toy.Story/Toy.Story.rar"
     → Extract using unrar_file tool
     → Tool returns ["Toy.Story/Toy.Story.mkv"], this list of files is
       considered with the rest of the torrents files. Do NOT include the
-      archive itself in the final list.
+      archive itself as a filePath in the final list!
     → type: "movie",
       title: "Toy Story",
       filePath: "Toy.Story/Toy.Story.mkv", (Note this is NOT the .rar file!)
-      notPartOfTorrent: true
 
  - "A.Star.Is.Born.1976.mkv"
     → Web Search "a star is born" to see if the year is an important factor

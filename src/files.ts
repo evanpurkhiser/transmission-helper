@@ -18,57 +18,9 @@ export interface OrganizationResult {
   errors: Array<{filePath: string; error: string}>;
 }
 
-async function organizeFile(
-  torrentPath: string,
-  file: ClassifiedFile,
-  config: Config
-): Promise<'linked' | 'moved' | 'exists'> {
-  const fullSourcePath = join(torrentPath, file.filePath);
-  let targetPath: string | null = null;
-
-  if (file.type === 'movie') {
-    const ext = extname(file.filePath);
-    const fileName = `${file.title}${ext}`;
-    targetPath = join(config.MOVIES_DIR, fileName);
-  }
-
-  if (file.type === 'series') {
-    const ext = extname(file.filePath);
-    const seasonDir = `Season ${file.season}`;
-    const seasonPath = join(config.TV_SERIES_DIR, file.seriesTitle, seasonDir);
-
-    if (!existsSync(seasonPath)) {
-      await mkdir(seasonPath, {recursive: true});
-    }
-
-    const episodeNum = file.episode.toString().padStart(2, '0');
-    const seasonNum = file.season.toString().padStart(2, '0');
-    const fileName = `S${seasonNum}E${episodeNum}${ext}`;
-
-    targetPath = join(seasonPath, fileName);
-  }
-
-  if (targetPath === null) {
-    throw new Error('Invalid file type');
-  }
-
-  if (existsSync(targetPath)) {
-    console.log(`Skipped (already exists): ${fullSourcePath} -> ${targetPath}`);
-    return 'exists';
-  }
-
-  if (file.notPartOfTorrent) {
-    rename(fullSourcePath, targetPath);
-  }
-
-  await link(fullSourcePath, targetPath);
-  console.log(`Hard linked: ${fullSourcePath} -> ${targetPath}`);
-
-  return 'linked';
-}
-
 export async function organizeFiles(
   torrentPath: string,
+  torrentFiles: string,
   files: ClassifiedFile[],
   config: Config
 ): Promise<OrganizationResult> {
@@ -78,6 +30,58 @@ export async function organizeFiles(
     exists: [],
     errors: [],
   };
+
+  async function organizeFile(
+    torrentPath: string,
+    file: ClassifiedFile,
+    config: Config
+  ): Promise<'linked' | 'moved' | 'exists'> {
+    const fullSourcePath = join(torrentPath, file.filePath);
+    let targetPath: string | null = null;
+
+    if (file.type === 'movie') {
+      const ext = extname(file.filePath);
+      const fileName = `${file.title}${ext}`;
+      targetPath = join(config.MOVIES_DIR, fileName);
+    }
+
+    if (file.type === 'series') {
+      const ext = extname(file.filePath);
+      const seasonDir = `Season ${file.season}`;
+      const seasonPath = join(config.TV_SERIES_DIR, file.seriesTitle, seasonDir);
+
+      if (!existsSync(seasonPath)) {
+        await mkdir(seasonPath, {recursive: true});
+      }
+
+      const episodeNum = file.episode.toString().padStart(2, '0');
+      const seasonNum = file.season.toString().padStart(2, '0');
+      const fileName = `S${seasonNum}E${episodeNum}${ext}`;
+
+      targetPath = join(seasonPath, fileName);
+    }
+
+    if (targetPath === null) {
+      throw new Error('Invalid file type');
+    }
+
+    if (existsSync(targetPath)) {
+      console.log(`Skipped (already exists): ${fullSourcePath} -> ${targetPath}`);
+      return 'exists';
+    }
+
+    // Files not part of the original torrent (such as files extracted from a
+    // rar) are moved instead of linked.
+    if (!torrentFiles.includes(file.filePath)) {
+      await rename(fullSourcePath, targetPath);
+      console.log(`Moved file: ${fullSourcePath} -> ${targetPath}`);
+      return 'moved';
+    }
+
+    await link(fullSourcePath, targetPath);
+    console.log(`Hard linked: ${fullSourcePath} -> ${targetPath}`);
+    return 'linked';
+  }
 
   for (const file of files) {
     const {filePath} = file;

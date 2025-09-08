@@ -55,7 +55,12 @@ async function main() {
     return;
   }
 
-  const organized = await organizeFiles(torrent.savePath, classification.files, config);
+  const organized = await organizeFiles(
+    torrent.savePath,
+    fileNames,
+    classification.files,
+    config
+  );
 
   const moveTorrent =
     organized.errors.length === 0 &&
