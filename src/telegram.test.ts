@@ -1,13 +1,14 @@
 import {describe, expect, it} from 'vitest';
 
 import {ClassificationResult} from './agent';
-import {HardLinkResult} from './files';
+import {OrganizationResult} from './files';
 import {formatTorrentResults} from './telegram';
 
 describe('formatTelegramMessage', () => {
   it('should format message with series files', () => {
     const torrentName = 'Breaking.Bad.S01.1080p.BluRay';
     const classification: ClassificationResult = {
+      icon: '🧪',
       description: 'Complete first season of Breaking Bad',
       files: [
         {
@@ -37,25 +38,33 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const linkResults: HardLinkResult = {
-      linked: [{sourceFile: 'test1.mkv', linkPath: '/movies/test1.mkv'}],
+    const organized: OrganizationResult = {
+      moved: [],
+      linked: ['test1.mkv'],
       exists: [],
       errors: [],
     };
 
-    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: true});
+    const message = formatTorrentResults({
+      torrentName,
+      classification,
+      organized,
+      torrentMoved: true,
+    });
 
-    expect(result).toBe(
+    expect(message).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '*Breaking\\.Bad\\.S01\\.1080p\\.BluRay*\nComplete first season of Breaking Bad',
+        '🧪 *Breaking\\.Bad\\.S01\\.1080p\\.BluRay*',
+        '',
+        'Complete first season of Breaking Bad',
         '',
         '📺 Breaking Bad',
         'Season 1 Episode 1→3',
         '',
         '🔗 Linked: 1 files',
-        '📁 Torrent moved to seeding directory',
+        '🗄️ Torrent moved to seeding directory',
       ].join('\n')
     );
   });
@@ -63,6 +72,7 @@ describe('formatTelegramMessage', () => {
   it('should format message with movie files', () => {
     const torrentName = 'The.Dark.Knight.2008.1080p.BluRay';
     const classification: ClassificationResult = {
+      icon: '🦇',
       description: 'Christopher Nolan Batman film',
       files: [
         {
@@ -73,19 +83,27 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const linkResults: HardLinkResult = {
+    const organized: OrganizationResult = {
+      moved: [],
       linked: [],
       exists: [],
       errors: [],
     };
 
-    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
+    const message = formatTorrentResults({
+      torrentName,
+      classification,
+      organized,
+      torrentMoved: false,
+    });
 
-    expect(result).toBe(
+    expect(message).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '*The\\.Dark\\.Knight\\.2008\\.1080p\\.BluRay*\nChristopher Nolan Batman film',
+        '🦇 *The\\.Dark\\.Knight\\.2008\\.1080p\\.BluRay*',
+        '',
+        'Christopher Nolan Batman film',
         '',
         '🎬 The Dark Knight',
         '',
@@ -97,6 +115,7 @@ describe('formatTelegramMessage', () => {
   it('should format message with multiple series and seasons', () => {
     const torrentName = 'Mixed.TV.Pack';
     const classification: ClassificationResult = {
+      icon: '🧪',
       description: 'Various TV episodes',
       files: [
         {
@@ -126,19 +145,27 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const linkResults: HardLinkResult = {
+    const organized: OrganizationResult = {
+      moved: [],
       linked: [],
       exists: [],
       errors: [],
     };
 
-    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
+    const message = formatTorrentResults({
+      torrentName,
+      classification,
+      organized,
+      torrentMoved: false,
+    });
 
-    expect(result).toBe(
+    expect(message).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '*Mixed\\.TV\\.Pack*\nVarious TV episodes',
+        '🧪 *Mixed\\.TV\\.Pack*',
+        '',
+        'Various TV episodes',
         '',
         '📺 Breaking Bad',
         'Season 1 Episode 1',
@@ -155,6 +182,7 @@ describe('formatTelegramMessage', () => {
   it('should format message with mixed movies and series', () => {
     const torrentName = 'Mixed.Content.Pack';
     const classification: ClassificationResult = {
+      icon: '🎥',
       description: 'Mixed movies and TV content',
       files: [
         {
@@ -178,19 +206,27 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const linkResults: HardLinkResult = {
+    const organized: OrganizationResult = {
+      moved: [],
       linked: [],
       exists: [],
       errors: [],
     };
 
-    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
+    const message = formatTorrentResults({
+      torrentName,
+      classification,
+      organized,
+      torrentMoved: false,
+    });
 
-    expect(result).toBe(
+    expect(message).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '*Mixed\\.Content\\.Pack*\nMixed movies and TV content',
+        '🎥 *Mixed\\.Content\\.Pack*',
+        '',
+        'Mixed movies and TV content',
         '',
         '📺 Westworld',
         'Season 1 Episode 1',
@@ -205,23 +241,32 @@ describe('formatTelegramMessage', () => {
   it('should handle empty files array', () => {
     const torrentName = 'Empty.Torrent';
     const classification: ClassificationResult = {
+      icon: '😶',
       description: 'No relevant files found',
       files: [],
     };
 
-    const linkResults: HardLinkResult = {
+    const organized: OrganizationResult = {
+      moved: [],
       linked: [],
       exists: [],
       errors: [],
     };
 
-    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
+    const message = formatTorrentResults({
+      torrentName,
+      classification,
+      organized,
+      torrentMoved: false,
+    });
 
-    expect(result).toBe(
+    expect(message).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '*Empty\\.Torrent*\nNo relevant files found',
+        '😶 *Empty\\.Torrent*',
+        '',
+        'No relevant files found',
         '',
         '',
         '⚠️ Torrent left in download directory',
@@ -232,6 +277,7 @@ describe('formatTelegramMessage', () => {
   it('should group episodes correctly in ranges', () => {
     const torrentName = 'Series.Season.Pack';
     const classification: ClassificationResult = {
+      icon: '👑',
       description: 'Complete season with sequential episodes',
       files: [
         {
@@ -269,19 +315,27 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const linkResults: HardLinkResult = {
+    const organized: OrganizationResult = {
+      moved: [],
       linked: [],
       exists: [],
       errors: [],
     };
 
-    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
+    const message = formatTorrentResults({
+      torrentName,
+      classification,
+      organized,
+      torrentMoved: false,
+    });
 
-    expect(result).toBe(
+    expect(message).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '*Series\\.Season\\.Pack*\nComplete season with sequential episodes',
+        '👑 *Series\\.Season\\.Pack*',
+        '',
+        'Complete season with sequential episodes',
         '',
         '📺 Game of Thrones',
         'Season 1 Episode 1→3, 5',
@@ -294,6 +348,7 @@ describe('formatTelegramMessage', () => {
   it('should sort episodes correctly with double digit numbers', () => {
     const torrentName = 'Series.Full.Season';
     const classification: ClassificationResult = {
+      icon: '📝',
       description: 'Season with episodes 1-11 in mixed order',
       files: [
         {
@@ -339,19 +394,27 @@ describe('formatTelegramMessage', () => {
       ],
     };
 
-    const linkResults: HardLinkResult = {
+    const organized: OrganizationResult = {
+      moved: [],
       linked: [],
       exists: [],
       errors: [],
     };
 
-    const result = formatTorrentResults({torrentName, classification, linkResults, wasMoved: false});
+    const message = formatTorrentResults({
+      torrentName,
+      classification,
+      organized,
+      torrentMoved: false,
+    });
 
-    expect(result).toBe(
+    expect(message).toBe(
       [
         '📥 Finished torrent download',
         '',
-        '*Series\\.Full\\.Season*\nSeason with episodes 1\\-11 in mixed order',
+        '📝 *Series\\.Full\\.Season*',
+        '',
+        'Season with episodes 1\\-11 in mixed order',
         '',
         '📺 Test Series',
         'Season 2 Episode 1→2, 9→11',

@@ -10,6 +10,10 @@ export const movieFileSchema = z
       .string()
       .describe('Clean movie title without quality indicators, year, or release info'),
     filePath: z.string().describe('The original file path from the torrent'),
+    notPartOfTorrent: z
+      .boolean()
+      .optional()
+      .describe('Indicates this movie file was not part of the torrent contents'),
   })
   .strict();
 
@@ -26,6 +30,10 @@ export const seriesFileSchema = z
       .nullable()
       .describe('Clean episode title if available, otherwise null'),
     filePath: z.string().describe('The original file path from the torrent'),
+    notPartOfTorrent: z
+      .boolean()
+      .optional()
+      .describe('Indicates this episode file was not part of the torrent contents'),
   })
   .strict();
 
@@ -56,6 +64,11 @@ interface AgentConfig {
    * Returns a list of all currently existing TV Series
    */
   listExistingTvSeries: () => Promise<string[]>;
+  /**
+   * Extracts the given rar file (path relative to the torrent save directory)
+   * and returns a list of extracted files
+   */
+  unrarFile: (args: {rarFilePath: string}) => Promise<string[]>;
 }
 
 const INSTRUCTIONS = `
@@ -67,10 +80,14 @@ we're orgaizing our episodes into an existing folder. If it doesn't you should
 check the list of all existing TV Series on my harddrive to see you may have
 inferend the name of the Series incorrectly.
 
-If you're not ABSOLUTELY sure of the name of the seriers or movie, make a web
-search to verify. For example if the movie contains a year in the title, it may
-be a remake of a movie released many years ago, and this version of the movie
-should have the year in the title.
+If you're not ABSOLUTELY sure of the name of the series or movie, use the
+webSearchTool to verify. For example if the movie contains a year in the title,
+it may be a remake of a movie released many years ago, and this version of the
+movie should have the year in the title.
+
+If the contents of the torrent contains a RAR archive (common in scene rips)
+use the unrar_file tool to extract the archive and receive a list of extracted
+media files. For these media files mark them with "notPartOfTorrent: true".
 
 Examples:
 - "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP" → Movie: "The Dark Knight"
@@ -98,10 +115,18 @@ export function createAgent(config: AgentConfig) {
     execute: config.listExistingTvSeries,
   });
 
+  const unrarFile = tool({
+    name: 'unrar_file',
+    description: 'Extracts files in a RAR archive and returns their paths',
+    parameters: z.object({rarFilePath: z.string()}),
+    strict: true,
+    execute: config.unrarFile,
+  });
+
   const agent = new Agent({
     name: 'Torrent Organizer',
     instructions: INSTRUCTIONS,
-    tools: [checkTvShowExists, listExistingTvSeries, webSearchTool()],
+    tools: [checkTvShowExists, listExistingTvSeries, unrarFile, webSearchTool()],
     outputType: classificationSchema,
   });
 

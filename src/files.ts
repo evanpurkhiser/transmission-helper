@@ -1,21 +1,26 @@
+import {exec} from 'child_process';
 import {existsSync} from 'fs';
-import {link, mkdir} from 'fs/promises';
-import {extname, join} from 'path';
+import {link, mkdir, rename} from 'fs/promises';
+import {dirname, extname, join} from 'path';
+import {promisify} from 'util';
 
 import {ClassifiedFile} from './agent';
 import {Config} from './config';
 
-export interface HardLinkResult {
+const execAsync = promisify(exec);
+
+export interface OrganizationResult {
+  moved: string[];
   linked: string[];
   exists: string[];
   errors: Array<{filePath: string; error: string}>;
 }
 
-async function linkFile(
+async function organizeFile(
   torrentPath: string,
   file: ClassifiedFile,
   config: Config
-): Promise<'linked' | 'exists'> {
+): Promise<'linked' | 'moved' | 'exists'> {
   const fullSourcePath = join(torrentPath, file.filePath);
   let targetPath: string | null = null;
 
@@ -50,18 +55,23 @@ async function linkFile(
     return 'exists';
   }
 
+  if (file.notPartOfTorrent) {
+    rename(fullSourcePath, targetPath);
+  }
+
   await link(fullSourcePath, targetPath);
   console.log(`Hard linked: ${fullSourcePath} -> ${targetPath}`);
 
   return 'linked';
 }
 
-export async function hardLinkFiles(
+export async function organizeFiles(
   torrentPath: string,
   files: ClassifiedFile[],
   config: Config
-): Promise<HardLinkResult> {
-  const result: HardLinkResult = {
+): Promise<OrganizationResult> {
+  const result: OrganizationResult = {
+    moved: [],
     linked: [],
     exists: [],
     errors: [],
@@ -71,7 +81,7 @@ export async function hardLinkFiles(
     const {filePath} = file;
 
     try {
-      const status = await linkFile(torrentPath, file, config);
+      const status = await organizeFile(torrentPath, file, config);
       result[status].push(filePath);
     } catch (error) {
       result.errors.push({filePath, error: String(error)});
@@ -80,4 +90,30 @@ export async function hardLinkFiles(
   }
 
   return result;
+}
+
+export async function unrarFile(
+  basePath: string,
+  rarFilePath: string
+): Promise<string[]> {
+  try {
+    const fullRarPath = join(basePath, rarFilePath);
+    const extractDir = join(basePath, dirname(rarFilePath));
+
+    // First get the list of files
+    const {stdout: listOutput} = await execAsync(`unrar lb "${fullRarPath}"`);
+
+    const fileList = listOutput
+      .trim()
+      .split('\n')
+      .filter(line => line.trim() !== '')
+      .map(fileName => join(dirname(rarFilePath), fileName));
+
+    await execAsync(`unrar e -o+ "${fullRarPath}" "${extractDir}/"`);
+
+    return fileList;
+  } catch (error) {
+    console.error(`Failed to extract RAR file ${rarFilePath}:`, error);
+    return [];
+  }
 }

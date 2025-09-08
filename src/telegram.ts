@@ -4,13 +4,13 @@ import {escapeMarkdown} from 'telegram-escape';
 
 import {ClassificationResult, MovieFile, SeriesFile} from './agent';
 import {Config} from './config';
-import {HardLinkResult} from './files';
+import {OrganizationResult} from './files';
 
 export interface FormatTorrentResultOptions {
   torrentName: string;
   classification: ClassificationResult;
-  linkResults: HardLinkResult;
-  wasMoved: boolean;
+  organized: OrganizationResult;
+  torrentMoved: boolean;
 }
 
 function stringRange(nums: number[]): string[] {
@@ -44,7 +44,7 @@ function formatMovieFiles(files: MovieFile[]) {
 }
 
 export function formatTorrentResults(options: FormatTorrentResultOptions): string {
-  const {torrentName, classification, linkResults, wasMoved} = options;
+  const {torrentName, classification, organized, torrentMoved} = options;
   const lines = [
     '📥 Finished torrent download',
     '',
@@ -71,24 +71,25 @@ export function formatTorrentResults(options: FormatTorrentResultOptions): strin
     lines.push(movieList);
   }
 
-  if (linkResults.errors || linkResults.exists || linkResults.linked) {
+  if (organized.errors || organized.exists || organized.linked) {
     lines.push('');
   }
 
-  if (linkResults.linked.length > 0) {
-    lines.push(`🔗 Linked: ${linkResults.linked.length} files`);
+  if (organized.linked.length > 0) {
+    lines.push(`🔗 Linked: ${organized.linked.length} files`);
+  }
+  if (organized.moved.length > 0) {
+    lines.push(`🗂️ Moved: ${organized.linked.length} files`);
+  }
+  if (organized.exists.length > 0) {
+    lines.push(`⚠️ Skipped: ${organized.exists.length} files \\(already exist\\)`);
+  }
+  if (organized.errors.length > 0) {
+    lines.push(`❌ Errors: ${organized.errors.length} files`);
   }
 
-  if (linkResults.exists.length > 0) {
-    lines.push(`⚠️ Skipped: ${linkResults.exists.length} files \\(already exist\\)`);
-  }
-
-  if (linkResults.errors.length > 0) {
-    lines.push(`❌ Errors: ${linkResults.errors.length} files`);
-  }
-
-  if (wasMoved) {
-    lines.push('📁 Torrent moved to seeding directory');
+  if (torrentMoved) {
+    lines.push('🗄️ Torrent moved to seeding directory');
   } else {
     lines.push('⚠️ Torrent left in download directory');
   }

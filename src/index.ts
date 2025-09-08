@@ -6,7 +6,7 @@ import {readdir} from 'fs/promises';
 
 import {createAgent} from './agent';
 import {createConfig} from './config';
-import {hardLinkFiles} from './files';
+import {organizeFiles, unrarFile} from './files';
 import {
   formatFailedClassification,
   formatTorrentResults,
@@ -44,6 +44,7 @@ async function main() {
   const agent = createAgent({
     listExistingTvSeries,
     checkTvShowExists,
+    unrarFile: ({rarFilePath}) => unrarFile(torrent.savePath, rarFilePath),
   });
 
   const classification = await agent.classifyTorrent({
@@ -56,11 +57,11 @@ async function main() {
     return;
   }
 
-  const linkResults = await hardLinkFiles(torrent.savePath, classification.files, config);
+  const organized = await organizeFiles(torrent.savePath, classification.files, config);
 
   const moveTorrent =
-    linkResults.errors.length === 0 &&
-    linkResults.linked.length + linkResults.exists.length > 0;
+    organized.errors.length === 0 &&
+    organized.linked.length + organized.exists.length > 0;
 
   if (moveTorrent && !!config.MOVE_COMPLETE_DIR) {
     await client.moveTorrent(torrentId, config.MOVE_COMPLETE_DIR);
@@ -69,8 +70,8 @@ async function main() {
   const telegramMessage = formatTorrentResults({
     torrentName: torrent.name,
     classification,
-    linkResults,
-    wasMoved: moveTorrent && !!config.MOVE_COMPLETE_DIR,
+    organized,
+    torrentMoved: moveTorrent && !!config.MOVE_COMPLETE_DIR,
   });
   await notifyTelegram(telegramMessage, config);
 }
