@@ -71,7 +71,9 @@ export function formatTorrentResults(options: FormatTorrentResultOptions): strin
     lines.push(movieList);
   }
 
-  lines.push('');
+  if (linkResults.errors || linkResults.exists || linkResults.linked) {
+    lines.push('');
+  }
 
   if (linkResults.linked.length > 0) {
     lines.push(`🔗 Linked: ${linkResults.linked.length} files`);
