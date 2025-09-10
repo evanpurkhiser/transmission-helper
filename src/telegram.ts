@@ -1,13 +1,10 @@
 import {groupBy} from 'es-toolkit';
-import {ofetch} from 'ofetch';
 import {escapeMarkdown} from 'telegram-escape';
 
 import {ClassificationResult, MovieFile, SeriesFile} from './agent';
-import {Config} from './config';
 import {OrganizationResult} from './files';
 
 export interface FormatTorrentResultOptions {
-  torrentName: string;
   classification: ClassificationResult;
   organized: OrganizationResult;
   torrentMoved: boolean;
@@ -32,7 +29,9 @@ function formatSeriesFiles(seriesName: string, files: SeriesFile[]) {
       season,
       stringRange(files.map(file => file.episode).toSorted((a, b) => a - b)).join(', '),
     ])
-    .map(([season, episodeList]) => `- Season ${season} Episode ${episodeList}`);
+    .map(([season, episodeList]) =>
+      escapeMarkdown(`- Season ${season} Episode ${episodeList}`)
+    );
 
   return `📺 ${escapeMarkdown(seriesName)}\n${items.join('\n')}`;
 }
@@ -41,91 +40,87 @@ function formatMovieFiles(files: MovieFile[]) {
   return files.map(movieFile => `🎬 ${escapeMarkdown(movieFile.title)}`).join('\n');
 }
 
-export function formatTorrentResults(options: FormatTorrentResultOptions): string {
-  const {torrentName, classification, organized, torrentMoved} = options;
-  const lines = [
-    `*${escapeMarkdown(torrentName)}*`,
-    '',
-    `${escapeMarkdown(classification.icon)} ${escapeMarkdown(classification.description)}`,
-    '',
-  ];
-
-  const series = classification.files.filter(f => f.type === 'series');
-  const movies = classification.files.filter(f => f.type === 'movie');
-
-  const seriesList = Object.entries(groupBy(series, file => file.seriesTitle))
-    .map(([seriesName, files]) => formatSeriesFiles(seriesName, files))
-    .join('\n\n');
-
-  if (seriesList) {
-    lines.push(seriesList);
+export function makeFormatHelper(torrentName: string) {
+  function formatTorrentFinished(): string {
+    return [
+      escapeMarkdown('📥 Torrent finished'),
+      `*${escapeMarkdown(torrentName)}*`,
+      '',
+      '🧠 _Using AI to classify and organize_',
+    ].join('\n');
   }
 
-  const movieList = formatMovieFiles(movies);
+  function formatTorrentResults(options: FormatTorrentResultOptions): string {
+    const {classification, organized, torrentMoved} = options;
+    const lines = [
+      escapeMarkdown('📥 Torrent organized'),
+      `*${escapeMarkdown(torrentName)}*`,
+      '',
+      `${escapeMarkdown(classification.icon)} ${escapeMarkdown(classification.description)}`,
+      '',
+    ];
 
-  if (movieList) {
-    lines.push(movieList);
+    const series = classification.files.filter(f => f.type === 'series');
+    const movies = classification.files.filter(f => f.type === 'movie');
+
+    const seriesList = Object.entries(groupBy(series, file => file.seriesTitle))
+      .map(([seriesName, files]) => formatSeriesFiles(seriesName, files))
+      .join('\n\n');
+
+    if (seriesList) {
+      lines.push(seriesList);
+    }
+
+    const movieList = formatMovieFiles(movies);
+
+    if (movieList) {
+      lines.push(movieList);
+    }
+
+    lines.push('');
+
+    const {errors, exists, linked, moved} = organized;
+
+    if (linked.length > 0) {
+      lines.push(`♻️ Linked: ${linked.length} files`);
+    }
+    if (moved.length > 0) {
+      lines.push(`🗂️ Moved: ${moved.length} files`);
+    }
+    if (exists.length > 0) {
+      lines.push(`⚠️ Skipped: ${exists.length} files \\(already exist\\)`);
+    }
+    if (errors.length > 0) {
+      lines.push(
+        `**> ❌ Errors: ${errors.length} files`,
+        '>',
+        ...errors.map(i => `> - ${i.error}`),
+        ''
+      );
+    }
+
+    if (torrentMoved) {
+      lines.push('🗄️ Torrent moved to seeding directory');
+    } else {
+      lines.push('⚠️ Torrent left in download directory');
+    }
+
+    return lines
+      .join('\n')
+      .replace(/\n\n\n+/, '\n\n')
+      .trim();
   }
 
-  const {errors, exists, linked, moved} = organized;
-
-  if (linked.length > 0) {
-    lines.push(`🔗 Linked: ${linked.length} files`);
-  }
-  if (moved.length > 0) {
-    lines.push(`🗂️ Moved: ${moved.length} files`);
-  }
-  if (exists.length > 0) {
-    lines.push(`⚠️ Skipped: ${exists.length} files \\(already exist\\)`);
-  }
-  if (errors.length > 0) {
-    lines.push(
-      `**> ❌ Errors: ${errors.length} files`,
-      '>',
-      ...errors.map(i => `> - ${i.error}`),
-      ''
-    );
+  function formatFailedClassification(): string {
+    return [
+      '⚠️ AI failed to classify torrent download',
+      `*${escapeMarkdown(torrentName)}*`,
+    ].join('\n');
   }
 
-  if (torrentMoved) {
-    lines.push('🗄️ Torrent moved to seeding directory');
-  } else {
-    lines.push('⚠️ Torrent left in download directory');
-  }
-
-  return lines.join('\n').replace(/\n\n\n+/, '\n\n');
-}
-
-export function formatFailedClassification(torrentName: string): string {
-  return [
-    '⚠️ AI failed to classify the torrent',
-    `*${escapeMarkdown(torrentName)}*`,
-  ].join('\n');
-}
-
-export function formatTorrentFinished(torrentName: string): string {
-  return [
-    escapeMarkdown('📥 Processing finished torrent...'),
-    `*${escapeMarkdown(torrentName)}*`,
-  ].join('\n');
-}
-
-export async function notifyTelegram(text: string, config: Config) {
-  const token = config.TELEGRAM_TOKEN;
-  const chatId = config.TELEGRAM_CHAT_ID;
-
-  const data = {
-    text,
-    chat_id: chatId,
-    parse_mode: 'MarkdownV2',
+  return {
+    formatTorrentFinished,
+    formatTorrentResults,
+    formatFailedClassification,
   };
-
-  const options: RequestInit = {
-    method: 'POST',
-    body: JSON.stringify(data),
-    headers: {'content-type': 'application/json'},
-  };
-
-  await ofetch(`https://api.telegram.org/bot${token}/sendMessage`, options);
-  return null;
 }

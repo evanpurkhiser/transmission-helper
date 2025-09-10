@@ -47,7 +47,7 @@ export const classificationSchema = z
     icon: z
       .string()
       .describe(
-        'A single emoji representing the media. Be more specific than 🎥, 🎬, or 📺'
+        'A single emoji representing the media. Try to be specific to the movie or series!'
       ),
   })
   .strict();
@@ -80,18 +80,17 @@ media files.
 
 Preprocessing the file list:
 
- - If the the torrent contains a .rar archive file (common in scene rips) use
-   the unrar_file tool to extract the archive and receive a list of extracted
-   media files. Take those files into considration. If any of the files are
-   considered as media for our final file list, be sure to set the filePath as the
-   extracted file, not the source archive.
+ - If the the torrent contains a .rar archive file use the unrar_file tool to
+   extract the archive and receive a list of extracted files. If any of the
+   files are considered as media for our final file list, be sure to set the
+   filePath as the extracted file, not the source archive.
 
 Rules for categorization:
 
- - For TV Series you should first check if the name of TV Series exists so we know
+ - For TV Series first check if the name of TV Series exists so we know
    we're orgaizing our episodes into an existing folder. If it doesn't you
-   should check the list of all existing TV Series on my harddrive to see if
-   you may have inferend the name of the Series incorrectly.
+   should check the list of all existing TV Series  to see if you may have
+  inferend the name of the Series incorrectly.
 
  - If you're not ABSOLUTELY sure of the name of the series or movie, use the
    webSearchTool to verify. For example if the movie contains a year in the
@@ -99,10 +98,9 @@ Rules for categorization:
    of the movie should have the year in the title.
 
  - Only consider actual video files with common extensions (.mp4, .mkv, .avi,
-   etc.) for the final list of files.
-
- - Files such as ISOs, EXEs, text files, .nfo files, archive files, images,
-   subtitles, etc should NEVER appear as a 'filePath' in the final output list!
+   etc.) for the final list of files. Files such as ISOs, EXEs, text files,
+   .nfo files, archive files, images, subtitles, etc should NEVER appear as a
+   'filePath' in the final output list!
 
 Examples scenarios:
 
@@ -118,12 +116,6 @@ Examples scenarios:
      episode: 1,
      filePath: "Breaking.Bad.S01E01.Pilot.1080p.WEB-DL.x264/S01E01.mkv"
 
- - "ubuntu-22.04.3-desktop-amd64.iso"
-   → Ignored (not media)
-
- - "Sample.mkv"
-   → Ignored (sample file)
-
  - "Toy.Story/Toy.Story.rar"
     → Extract using unrar_file tool
     → Tool returns ["Toy.Story/Toy.Story.mkv"], this list of files is
@@ -137,7 +129,13 @@ Examples scenarios:
     → Web Search "a star is born" to see if the year is an important factor
     → type: "movie",
       title: "A Star Is Born (1976)" (there were multiple remakes with the same name)
-`;
+
+ - "ubuntu-22.04.3-desktop-amd64.iso"
+   → Ignored (not media)
+
+ - "Sample.mkv"
+   → Ignored (sample file)
+`.trim();
 
 export function createAgent(config: AgentConfig) {
   const checkTvShowExists = tool({

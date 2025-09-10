@@ -1,18 +1,14 @@
 import {Transmission} from '@ctrl/transmission';
 import {setDefaultOpenAIKey} from '@openai/agents';
 import {init} from '@sentry/node';
+import {TelegramBot} from 'typescript-telegram-bot-api';
 
 import {readdir} from 'fs/promises';
 
 import {createAgent} from './agent';
 import {createConfig} from './config';
 import {organizeFiles, unrarFile} from './files';
-import {
-  formatFailedClassification,
-  formatTorrentFinished,
-  formatTorrentResults,
-  notifyTelegram,
-} from './telegram';
+import {makeFormatHelper} from './telegram';
 
 async function main() {
   const config = createConfig(process.env);
@@ -26,10 +22,30 @@ async function main() {
     password: config.TRANSMISSION_PASSWORD,
   });
 
+  const chat = new TelegramBot({botToken: config.TELEGRAM_TOKEN});
+
   const torrentId = config.TORRENT_HASH;
   const torrent = await client.getTorrent(torrentId);
 
-  await notifyTelegram(formatTorrentFinished(torrent.name), config);
+  const helper = makeFormatHelper(torrent.name);
+
+  const message = await chat.sendMessage({
+    text: helper.formatTorrentFinished(),
+    chat_id: config.TELEGRAM_CHAT_ID,
+    parse_mode: 'MarkdownV2',
+  });
+
+  async function replaceMessage(text: string) {
+    await chat.deleteMessage({
+      chat_id: config.TELEGRAM_CHAT_ID,
+      message_id: message.message_id,
+    });
+    return chat.sendMessage({
+      chat_id: config.TELEGRAM_CHAT_ID,
+      parse_mode: 'MarkdownV2',
+      text,
+    });
+  }
 
   const fileNames = torrent.raw.files.map((file: any) => file.name);
 
@@ -54,7 +70,7 @@ async function main() {
   });
 
   if (classification === undefined) {
-    await notifyTelegram(formatFailedClassification(torrent.name), config);
+    await replaceMessage(helper.formatFailedClassification());
     return;
   }
 
@@ -75,13 +91,13 @@ async function main() {
     await client.moveTorrent(torrentId, config.MOVE_COMPLETE_DIR);
   }
 
-  const telegramMessage = formatTorrentResults({
-    torrentName: torrent.name,
+  const telegramMessage = helper.formatTorrentResults({
     classification,
     organized,
     torrentMoved: moveTorrent && !!config.MOVE_COMPLETE_DIR,
   });
-  await notifyTelegram(telegramMessage, config);
+
+  await replaceMessage(telegramMessage);
 }
 
 main();
