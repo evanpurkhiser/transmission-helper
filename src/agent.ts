@@ -1,6 +1,7 @@
 import {Agent, run, tool, webSearchTool} from '@openai/agents';
 import {z} from 'zod';
 
+import {stripCitations} from './text-utils';
 import {TorrentInfo} from './types';
 
 const filePath = z
@@ -176,7 +177,14 @@ export function createAgent(config: AgentConfig) {
 
     const result = await run(agent, torrentContext);
 
-    return result.finalOutput;
+    if (!result.finalOutput) {
+      throw new Error('Agent failed to produce output');
+    }
+
+    return {
+      ...result.finalOutput,
+      description: stripCitations(result.finalOutput.description),
+    };
   }
 
   return {classifyTorrent};
