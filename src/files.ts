@@ -29,7 +29,7 @@ export async function organizeFiles(
   torrentPath: string,
   torrentFiles: string,
   files: ClassifiedFile[],
-  config: Config
+  config: Config,
 ): Promise<OrganizationResult> {
   const result: OrganizationResult = {
     moved: [],
@@ -109,7 +109,7 @@ export async function organizeFiles(
 
 export async function unrarFile(
   basePath: string,
-  rarFilePath: string
+  rarFilePath: string,
 ): Promise<string[]> {
   try {
     const fullRarPath = join(basePath, rarFilePath);

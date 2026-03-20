@@ -13,11 +13,11 @@ export interface FormatTorrentResultOptions {
 function stringRange(nums: number[]): string[] {
   const groupedRanges = groupBy(
     nums.map((num, index) => ({num, index})),
-    x => x.num - x.index
+    x => x.num - x.index,
   );
 
   return Object.values(groupedRanges).map(g =>
-    g.length === 1 ? String(g[0].num) : `${g[0].num}→${g.at(-1)?.num}`
+    g.length === 1 ? String(g[0].num) : `${g[0].num}→${g.at(-1)?.num}`,
   );
 }
 
@@ -30,7 +30,7 @@ function formatSeriesFiles(seriesName: string, files: SeriesFile[]) {
       stringRange(files.map(file => file.episode).toSorted((a, b) => a - b)).join(', '),
     ])
     .map(([season, episodeList]) =>
-      escapeMarkdown(`- Season ${season} Episode ${episodeList}`)
+      escapeMarkdown(`- Season ${season} Episode ${episodeList}`),
     );
 
   return `📺 ${escapeMarkdown(seriesName)}\n${items.join('\n')}`;
@@ -95,7 +95,7 @@ export function makeFormatHelper(torrentName: string) {
         `**> ❌ Errors: ${errors.length} files`,
         '>',
         ...errors.map(i => `> - ${i.error}`),
-        ''
+        '',
       );
     }
 

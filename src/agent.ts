@@ -7,7 +7,7 @@ import {TorrentInfo} from './types';
 const filePath = z
   .string()
   .describe(
-    'The media physical file path (.mkv, .mp4, .avi, etc). Will be used to relocate the file so it MUST be a proper path.'
+    'The media physical file path (.mkv, .mp4, .avi, etc). Will be used to relocate the file so it MUST be a proper path.',
   );
 
 export const movieFileSchema = z
@@ -48,7 +48,7 @@ export const classificationSchema = z
     icon: z
       .string()
       .describe(
-        'A single emoji representing the media. Try to be specific to the movie or series!'
+        'A single emoji representing the media. Try to be specific to the movie or series!',
       ),
   })
   .strict();

@@ -64,7 +64,7 @@ describe('formatTelegramMessage', () => {
         '',
         '♻️ Linked: 1 files',
         '🗄️ Torrent moved to seeding directory',
-      ].join('\n')
+      ].join('\n'),
     );
   });
 
@@ -106,7 +106,7 @@ describe('formatTelegramMessage', () => {
         '🎬 The Dark Knight',
         '',
         '⚠️ Torrent left in download directory',
-      ].join('\n')
+      ].join('\n'),
     );
   });
 
@@ -172,7 +172,7 @@ describe('formatTelegramMessage', () => {
         '\\- Season 1 Episode 1',
         '',
         '⚠️ Torrent left in download directory',
-      ].join('\n')
+      ].join('\n'),
     );
   });
 
@@ -230,7 +230,7 @@ describe('formatTelegramMessage', () => {
         '🎬 Interstellar',
         '',
         '⚠️ Torrent left in download directory',
-      ].join('\n')
+      ].join('\n'),
     );
   });
 
@@ -264,7 +264,7 @@ describe('formatTelegramMessage', () => {
         '😶 No relevant files found',
         '',
         '⚠️ Torrent left in download directory',
-      ].join('\n')
+      ].join('\n'),
     );
   });
 
@@ -335,7 +335,7 @@ describe('formatTelegramMessage', () => {
         '\\- Season 1 Episode 1→3, 5',
         '',
         '⚠️ Torrent left in download directory',
-      ].join('\n')
+      ].join('\n'),
     );
   });
 
@@ -413,7 +413,7 @@ describe('formatTelegramMessage', () => {
         '\\- Season 2 Episode 1→2, 9→11',
         '',
         '⚠️ Torrent left in download directory',
-      ].join('\n')
+      ].join('\n'),
     );
   });
 });

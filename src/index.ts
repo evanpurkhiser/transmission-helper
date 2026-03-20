@@ -78,7 +78,7 @@ async function main() {
     torrent.savePath,
     fileNames,
     classification.files,
-    config
+    config,
   );
 
   const {moved, linked, exists, errors} = organized;

@@ -1,8 +1,9 @@
 {
   "name": "transmission-helper",
   "version": "1.0.0",
-  "main": "src/index.ts",
+  "license": "MIT",
   "type": "module",
+  "main": "src/index.ts",
   "scripts": {
     "test": "vitest",
     "lint": "eslint src/**/*.ts",
@@ -10,7 +11,6 @@
     "build": "tsdown",
     "dev": "tsx src/index.ts"
   },
-  "license": "MIT",
   "dependencies": {
     "@ctrl/transmission": "^7.3.0",
     "@openai/agents": "^0.1.0",
@@ -25,7 +25,7 @@
     "@evanpurkhiser/eslint-config": "^0.27.0",
     "@types/node": "^24.3.0",
     "eslint": "^9.35.0",
-    "prettier": "^3.6.2",
+    "oxfmt": "^0.41.0",
     "tsdown": "^0.14.2",
     "tsx": "^4.20.5",
     "typescript": "^5.3.3",
