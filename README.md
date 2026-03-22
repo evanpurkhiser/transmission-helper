@@ -1,5 +1,7 @@
 ## Transmission Helper
 
+[![Build](https://github.com/evanpurkhiser/transmission-helper/actions/workflows/main.yml/badge.svg)](https://github.com/evanpurkhiser/transmission-helper/actions/workflows/main.yml)
+
 An AI-powered tool that automatically classifies and organizes completed
 torrents from Transmission, then hard-links media files to your organized
 library structure.
