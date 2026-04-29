@@ -1,20 +1,20 @@
 import {captureException} from '@sentry/node';
 
-import {exec} from 'child_process';
-import {existsSync} from 'fs';
-import {link, mkdir, rename} from 'fs/promises';
-import {dirname, extname, join} from 'path';
-import {promisify} from 'util';
+import {exec} from 'node:child_process';
+import {existsSync} from 'node:fs';
+import {link, mkdir, rename} from 'node:fs/promises';
+import {dirname, extname, join} from 'node:path';
+import {promisify} from 'node:util';
 
-import {ClassifiedFile} from './agent';
-import {Config} from './config';
+import type {ClassifiedFile} from './agent';
+import type {Config} from './config';
 
 const execAsync = promisify(exec);
 
 function sanitizeFilename(filename: string): string {
   return filename
-    .replace(/[/\\\0]/g, '')
-    .replace(/\s+/g, ' ')
+    .replaceAll(/[/\\\0]/g, '')
+    .replaceAll(/\s+/g, ' ')
     .trim();
 }
 

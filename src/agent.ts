@@ -2,7 +2,7 @@ import {Agent, run, tool, webSearchTool} from '@openai/agents';
 import {z} from 'zod';
 
 import {stripCitations} from './text-utils';
-import {TorrentInfo} from './types';
+import type {TorrentInfo} from './types';
 
 const filePath = z
   .string()

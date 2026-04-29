@@ -3,7 +3,7 @@ import {setDefaultOpenAIKey} from '@openai/agents';
 import {init} from '@sentry/node';
 import {TelegramBot} from 'typescript-telegram-bot-api';
 
-import {readdir} from 'fs/promises';
+import {readdir} from 'node:fs/promises';
 
 import {createAgent} from './agent';
 import {createConfig} from './config';
@@ -87,14 +87,14 @@ async function main() {
   const moveTorrent =
     [...moved, ...linked].length > 0 && errors.length === 0 && exists.length === 0;
 
-  if (moveTorrent && !!config.MOVE_COMPLETE_DIR) {
+  if (moveTorrent && Boolean(config.MOVE_COMPLETE_DIR)) {
     await client.moveTorrent(torrentId, config.MOVE_COMPLETE_DIR);
   }
 
   const telegramMessage = helper.formatTorrentResults({
     classification,
     organized,
-    torrentMoved: moveTorrent && !!config.MOVE_COMPLETE_DIR,
+    torrentMoved: moveTorrent && Boolean(config.MOVE_COMPLETE_DIR),
   });
 
   await replaceMessage(telegramMessage);

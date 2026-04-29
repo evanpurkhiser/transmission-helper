@@ -1,8 +1,8 @@
 import {groupBy} from 'es-toolkit';
 import {escapeMarkdown} from 'telegram-escape';
 
-import {ClassificationResult, MovieFile, SeriesFile} from './agent';
-import {OrganizationResult} from './files';
+import type {ClassificationResult, MovieFile, SeriesFile} from './agent';
+import type {OrganizationResult} from './files';
 
 export interface FormatTorrentResultOptions {
   classification: ClassificationResult;

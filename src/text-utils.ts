@@ -25,5 +25,5 @@ export function stripCitations(text: string): string {
   // - cite (literal)
   // - one or more groups of: \uE202 + turn + digits + letters + digits
   // - \uE201 (end delimiter)
-  return text.replace(/\uE200cite(?:\uE202turn\d+[a-z]+\d+)+\uE201/gi, '');
+  return text.replaceAll(/\uE200cite(?:\uE202turn\d+[a-z]+\d+)+\uE201/gi, '');
 }

@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 
-import {ClassificationResult} from './agent';
-import {OrganizationResult} from './files';
+import type {ClassificationResult} from './agent';
+import type {OrganizationResult} from './files';
 import {makeFormatHelper} from './telegram';
 
 describe('formatTelegramMessage', () => {
