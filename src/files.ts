@@ -12,10 +12,13 @@ import type {Config} from './config';
 const execAsync = promisify(exec);
 
 function sanitizeFilename(filename: string): string {
-  return filename
-    .replaceAll(/[/\\\0]/g, '')
-    .replaceAll(/\s+/g, ' ')
-    .trim();
+  return (
+    filename
+      // oxlint-disable-next-line no-control-regex -- intentional null byte strip
+      .replaceAll(/[/\\\0]/g, '')
+      .replaceAll(/\s+/g, ' ')
+      .trim()
+  );
 }
 
 export interface OrganizationResult {
