@@ -8,20 +8,21 @@ RUN set -eux; \
   echo "deb http://deb.debian.org/debian ${codename}-updates ${comps}" >> /etc/apt/sources.list.d/non-free.list; \
   echo "deb http://security.debian.org/debian-security ${codename}-security ${comps}" >> /etc/apt/sources.list.d/non-free.list; \
   apt-get update; \
-  apt-get install -y unrar curl ca-certificates --no-install-recommends; \
+  apt-get install -y unrar curl gnupg libatomic1 ca-certificates --no-install-recommends; \
   rm -rf /var/lib/apt/lists/*
 
+ENV MISE_DATA_DIR=/mise
+ENV MISE_CONFIG_DIR=/mise
+ENV MISE_CACHE_DIR=/mise/cache
+ENV MISE_INSTALL_PATH=/usr/local/bin/mise
+ENV PATH=/mise/shims:$PATH
+
+RUN curl https://mise.run | sh
+
 WORKDIR /app
-
-ENV VOLTA_HOME /root/.volta
-ENV PATH $VOLTA_HOME/bin:$PATH
-RUN curl https://get.volta.sh | bash
-RUN volta fetch node@24.3.0
-RUN volta install node@24.3.0
-RUN volta install pnpm@10.15.1
-
-COPY package.json pnpm-lock.yaml /app/
-RUN pnpm install
+COPY mise.toml package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
+RUN mise trust mise.toml && mise install
+RUN pnpm install --frozen-lockfile
 
 COPY src/ ./src/
 COPY tsconfig.json .
