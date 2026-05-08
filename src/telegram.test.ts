@@ -416,4 +416,39 @@ describe('formatTelegramMessage', () => {
       ].join('\n'),
     );
   });
+
+  it('should escape markdown in error lines', () => {
+    const torrentName = "Frieren - Beyond Journey's End";
+    const classification: ClassificationResult = {
+      icon: '📺',
+      description: 'Series pack',
+      files: [],
+    };
+
+    const organized: OrganizationResult = {
+      moved: [],
+      linked: ['S01E01.mkv'],
+      exists: [],
+      errors: [
+        {
+          source: '/mnt/documents/downloads/torrents-complete/Frieren - Beyond Journey\'s End/S01E20.mkv',
+          destination: "/mnt/documents/multimedia/videos/series/Frieren: Beyond Journey's End/Season 1/S01E20.mkv",
+          error:
+            "ENOENT: no such file or directory, rename '/mnt/documents/downloads/torrents-complete/Frieren - Beyond Journey's End/S01E20.mkv' -> '/mnt/documents/multimedia/videos/series/Frieren: Beyond Journey's End/Season 1/S01E20.mkv'",
+        },
+      ],
+    };
+
+    const helper = makeFormatHelper(torrentName);
+    const message = helper.formatTorrentResults({
+      classification,
+      organized,
+      torrentMoved: false,
+    });
+
+    expect(message).toContain('❌ Errors: 1 files');
+    expect(message).toContain(
+      "- ENOENT: no such file or directory, rename '/mnt/documents/downloads/torrents\\-complete/Frieren \\- Beyond Journey's End/S01E20\\.mkv' \\-\\> '/mnt/documents/multimedia/videos/series/Frieren: Beyond Journey's End/Season 1/S01E20\\.mkv'",
+    );
+  });
 });

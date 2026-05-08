@@ -91,12 +91,9 @@ export function makeFormatHelper(torrentName: string) {
       lines.push(`⚠️ Skipped: ${exists.length} files \\(already exist\\)`);
     }
     if (errors.length > 0) {
-      lines.push(
-        `**> ❌ Errors: ${errors.length} files`,
-        '>',
-        ...errors.map(i => `> - ${i.error}`),
-        '',
-      );
+      lines.push(`❌ Errors: ${errors.length} files`);
+      lines.push(...errors.map(i => `\- ${escapeMarkdown(i.error)}`));
+      lines.push('');
     }
 
     if (torrentMoved) {
