@@ -7,7 +7,7 @@ import {dirname, extname, join} from 'node:path';
 import {promisify} from 'node:util';
 
 import type {ClassifiedFile} from './agent';
-import type {Config} from './config';
+import type {CategoryConfig, Config} from './config';
 
 const execAsync = promisify(exec);
 
@@ -28,6 +28,16 @@ export interface OrganizationResult {
   errors: Array<{filePath: string; error: string}>;
 }
 
+function getCategory(categories: CategoryConfig[], categoryId: string): CategoryConfig {
+  const category = categories.find(category => category.id === categoryId);
+
+  if (!category) {
+    throw new Error(`Unknown organization category: ${categoryId}`);
+  }
+
+  return category;
+}
+
 export async function organizeFiles(
   torrentPath: string,
   torrentFiles: string,
@@ -43,36 +53,40 @@ export async function organizeFiles(
 
   type Organization = 'linked' | 'moved' | 'exists';
 
-  async function organizeFile(file: ClassifiedFile): Promise<Organization> {
-    const fullSourcePath = join(torrentPath, file.filePath);
-    let targetPath: string | null = null;
-
-    if (file.type === 'movie') {
+  async function getTargetPath(file: ClassifiedFile, category: CategoryConfig) {
+    if (file.layout === 'movie') {
       const ext = extname(file.filePath);
       const fileName = `${sanitizeFilename(file.title)}${ext}`;
-      targetPath = join(config.MOVIES_DIR, fileName);
+      return join(category.path, fileName);
     }
 
-    if (file.type === 'series') {
-      const ext = extname(file.filePath);
-      const seasonDir = `Season ${file.season}`;
-      const sanitizedSeriesTitle = sanitizeFilename(file.seriesTitle);
-      const seasonPath = join(config.TV_SERIES_DIR, sanitizedSeriesTitle, seasonDir);
+    const ext = extname(file.filePath);
+    const seasonDir = `Season ${file.season}`;
+    const sanitizedSeriesTitle = sanitizeFilename(file.seriesTitle);
+    const seasonPath = join(category.path, sanitizedSeriesTitle, seasonDir);
 
-      if (!existsSync(seasonPath)) {
-        await mkdir(seasonPath, {recursive: true});
-      }
-
-      const episodeNum = file.episode.toString().padStart(2, '0');
-      const seasonNum = file.season.toString().padStart(2, '0');
-      const fileName = `S${seasonNum}E${episodeNum}${ext}`;
-
-      targetPath = join(seasonPath, fileName);
+    if (!existsSync(seasonPath)) {
+      await mkdir(seasonPath, {recursive: true});
     }
 
-    if (targetPath === null) {
-      throw new Error('Invalid file type');
+    const episodeNum = file.episode.toString().padStart(2, '0');
+    const seasonNum = file.season.toString().padStart(2, '0');
+    const fileName = `S${seasonNum}E${episodeNum}${ext}`;
+
+    return join(seasonPath, fileName);
+  }
+
+  async function organizeFile(file: ClassifiedFile): Promise<Organization> {
+    const fullSourcePath = join(torrentPath, file.filePath);
+    const category = getCategory(config.categories, file.category);
+
+    if (file.layout !== category.layout) {
+      throw new Error(
+        `Category ${category.id} uses ${category.layout} layout, got ${file.layout} layout`,
+      );
     }
+
+    const targetPath = await getTargetPath(file, category);
 
     if (existsSync(targetPath)) {
       console.log(`Skipped (already exists): ${fullSourcePath} -> ${targetPath}`);

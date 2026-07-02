@@ -1,7 +1,8 @@
 import {groupBy} from 'es-toolkit';
 import {escapeMarkdown} from 'telegram-escape';
 
-import type {ClassificationResult, MovieFile, SeriesFile} from './agent';
+import type {ClassificationResult, FileLayoutMovie, FileLayoutSeries} from './agent';
+import type {CategoryConfig} from './config';
 import type {OrganizationResult} from './files';
 
 export interface FormatTorrentResultOptions {
@@ -21,8 +22,23 @@ function stringRange(nums: number[]): string[] {
   );
 }
 
-function formatSeriesFiles(seriesName: string, files: SeriesFile[]) {
+function formatCategoryTitle(
+  categories: Map<string, string>,
+  file: FileLayoutMovie | FileLayoutSeries,
+  title: string,
+) {
+  const label = categories.get(file.category);
+
+  return label ? `[${label}] ${title}` : title;
+}
+
+function formatSeriesFiles(
+  categories: Map<string, string>,
+  seriesName: string,
+  files: FileLayoutSeries[],
+) {
   const seasons = groupBy(files, file => file.season);
+  const title = formatCategoryTitle(categories, files[0], seriesName);
 
   const items = Object.entries(seasons)
     .map(([season, files]) => [
@@ -33,14 +49,23 @@ function formatSeriesFiles(seriesName: string, files: SeriesFile[]) {
       escapeMarkdown(`- Season ${season} Episode ${episodeList}`),
     );
 
-  return `📺 ${escapeMarkdown(seriesName)}\n${items.join('\n')}`;
+  return `📺 ${escapeMarkdown(title)}\n${items.join('\n')}`;
 }
 
-function formatMovieFiles(files: MovieFile[]) {
-  return files.map(movieFile => `🎬 ${escapeMarkdown(movieFile.title)}`).join('\n');
+function formatMovieFiles(categories: Map<string, string>, files: FileLayoutMovie[]) {
+  return files
+    .map(
+      movieFile =>
+        `🎬 ${escapeMarkdown(formatCategoryTitle(categories, movieFile, movieFile.title))}`,
+    )
+    .join('\n');
 }
 
-export function makeFormatHelper(torrentName: string) {
+export function makeFormatHelper(torrentName: string, categories: CategoryConfig[] = []) {
+  const categoryLabels = new Map(
+    categories.map(category => [category.id, category.label] as const),
+  );
+
   function formatTorrentFinished(): string {
     return [
       escapeMarkdown('📥 Torrent finished'),
@@ -60,18 +85,20 @@ export function makeFormatHelper(torrentName: string) {
       '',
     ];
 
-    const series = classification.files.filter(f => f.type === 'series');
-    const movies = classification.files.filter(f => f.type === 'movie');
+    const series = classification.files.filter(f => f.layout === 'series');
+    const movies = classification.files.filter(f => f.layout === 'movie');
 
-    const seriesList = Object.entries(groupBy(series, file => file.seriesTitle))
-      .map(([seriesName, files]) => formatSeriesFiles(seriesName, files))
+    const seriesList = Object.values(
+      groupBy(series, file => `${file.category}\0${file.seriesTitle}`),
+    )
+      .map(files => formatSeriesFiles(categoryLabels, files[0].seriesTitle, files))
       .join('\n\n');
 
     if (seriesList) {
       lines.push(seriesList);
     }
 
-    const movieList = formatMovieFiles(movies);
+    const movieList = formatMovieFiles(categoryLabels, movies);
 
     if (movieList) {
       lines.push(movieList);
@@ -92,7 +119,7 @@ export function makeFormatHelper(torrentName: string) {
     }
     if (errors.length > 0) {
       lines.push(`❌ Errors: ${errors.length} files`);
-      lines.push(...errors.map(i => `\- ${escapeMarkdown(i.error)}`));
+      lines.push(...errors.map(i => `- ${escapeMarkdown(i.error)}`));
       lines.push('');
     }
 
@@ -108,16 +135,8 @@ export function makeFormatHelper(torrentName: string) {
       .trim();
   }
 
-  function formatFailedClassification(): string {
-    return [
-      '⚠️ AI failed to classify torrent download',
-      `*${escapeMarkdown(torrentName)}*`,
-    ].join('\n');
-  }
-
   return {
     formatTorrentFinished,
     formatTorrentResults,
-    formatFailedClassification,
   };
 }

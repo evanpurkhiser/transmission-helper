@@ -11,37 +11,37 @@ import {organizeFiles, unrarFile} from './files';
 import {makeFormatHelper} from './telegram';
 
 async function main() {
-  const config = createConfig(process.env);
+  const config = await createConfig(process.env);
 
-  init({dsn: config.SENTRY_DSN});
-  setDefaultOpenAIKey(config.OPENAI_API_KEY!);
+  init({dsn: config.sentryDsn});
+  setDefaultOpenAIKey(config.openaiApiKey);
 
   const client = new Transmission({
-    baseUrl: config.TRANSMISSION_BASE_URL,
-    username: config.TRANSMISSION_USERNAME,
-    password: config.TRANSMISSION_PASSWORD,
+    baseUrl: config.transmission.baseUrl,
+    username: config.transmission.username,
+    password: config.transmission.password,
   });
 
-  const chat = new TelegramBot({botToken: config.TELEGRAM_TOKEN});
+  const chat = new TelegramBot({botToken: config.telegram.token});
 
-  const torrentId = config.TORRENT_HASH;
+  const torrentId = config.torrentHash;
   const torrent = await client.getTorrent(torrentId);
 
-  const helper = makeFormatHelper(torrent.name);
+  const helper = makeFormatHelper(torrent.name, config.categories);
 
   const message = await chat.sendMessage({
     text: helper.formatTorrentFinished(),
-    chat_id: config.TELEGRAM_CHAT_ID,
+    chat_id: config.telegram.chatId,
     parse_mode: 'MarkdownV2',
   });
 
   async function replaceMessage(text: string) {
     await chat.deleteMessage({
-      chat_id: config.TELEGRAM_CHAT_ID,
+      chat_id: config.telegram.chatId,
       message_id: message.message_id,
     });
     return chat.sendMessage({
-      chat_id: config.TELEGRAM_CHAT_ID,
+      chat_id: config.telegram.chatId,
       parse_mode: 'MarkdownV2',
       text,
     });
@@ -49,18 +49,43 @@ async function main() {
 
   const fileNames = torrent.raw.files.map((file: any) => file.name);
 
-  function listExistingTvSeries() {
-    return readdir(config.TV_SERIES_DIR);
+  function getCategoryPath(categoryId: string) {
+    const category = config.categories.find(category => category.id === categoryId);
+
+    if (!category) {
+      throw new Error(`Unknown organization category: ${categoryId}`);
+    }
+
+    return category.path;
   }
 
-  async function checkTvShowExists({name}: {name: string}) {
-    const series = await listExistingTvSeries();
-    return series.find(s => s.toLowerCase() === name.toLowerCase()) ?? null;
+  async function listCategoryTitles({category}: {category: string}) {
+    try {
+      return await readdir(getCategoryPath(category));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return [];
+      }
+
+      throw error;
+    }
+  }
+
+  async function checkCategoryTitleExists({
+    category,
+    name,
+  }: {
+    category: string;
+    name: string;
+  }) {
+    const titles = await listCategoryTitles({category});
+    return titles.find(title => title.toLowerCase() === name.toLowerCase()) ?? null;
   }
 
   const agent = createAgent({
-    listExistingTvSeries,
-    checkTvShowExists,
+    categories: config.categories,
+    listCategoryTitles,
+    checkCategoryTitleExists,
     unrarFile: ({rarFilePath}) => unrarFile(torrent.savePath, rarFilePath),
   });
 
@@ -68,11 +93,6 @@ async function main() {
     name: torrent.name,
     fileNames,
   });
-
-  if (classification === undefined) {
-    await replaceMessage(helper.formatFailedClassification());
-    return;
-  }
 
   const organized = await organizeFiles(
     torrent.savePath,
@@ -86,15 +106,16 @@ async function main() {
   // Only move torrents if we successfully organize the torrent
   const moveTorrent =
     [...moved, ...linked].length > 0 && errors.length === 0 && exists.length === 0;
+  const moveCompleteDir = config.moveCompleteDir;
 
-  if (moveTorrent && Boolean(config.MOVE_COMPLETE_DIR)) {
-    await client.moveTorrent(torrentId, config.MOVE_COMPLETE_DIR);
+  if (moveTorrent && moveCompleteDir) {
+    await client.moveTorrent(torrentId, moveCompleteDir);
   }
 
   const telegramMessage = helper.formatTorrentResults({
     classification,
     organized,
-    torrentMoved: moveTorrent && Boolean(config.MOVE_COMPLETE_DIR),
+    torrentMoved: moveTorrent && Boolean(moveCompleteDir),
   });
 
   await replaceMessage(telegramMessage);

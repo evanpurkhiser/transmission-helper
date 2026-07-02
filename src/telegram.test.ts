@@ -12,7 +12,8 @@ describe('formatTelegramMessage', () => {
       description: 'Complete first season of Breaking Bad',
       files: [
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Breaking Bad',
           season: 1,
           episode: 1,
@@ -20,7 +21,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'Breaking.Bad.S01E01.Pilot.1080p.BluRay.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Breaking Bad',
           season: 1,
           episode: 2,
@@ -28,7 +30,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'Breaking.Bad.S01E02.Cat.in.the.Bag.1080p.BluRay.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Breaking Bad',
           season: 1,
           episode: 3,
@@ -75,7 +78,8 @@ describe('formatTelegramMessage', () => {
       description: 'Christopher Nolan Batman film',
       files: [
         {
-          type: 'movie',
+          layout: 'movie',
+          category: 'movies',
           title: 'The Dark Knight',
           filePath: 'The.Dark.Knight.2008.1080p.BluRay.mkv',
         },
@@ -110,6 +114,50 @@ describe('formatTelegramMessage', () => {
     );
   });
 
+  it('should include configured category labels', () => {
+    const torrentName = 'Frieren.S01E01';
+    const classification: ClassificationResult = {
+      icon: '🪄',
+      description: 'Anime episode',
+      files: [
+        {
+          layout: 'series',
+          category: 'anime',
+          seriesTitle: 'Frieren: Beyond Journeys End',
+          season: 1,
+          episode: 1,
+          episodeTitle: null,
+          filePath: 'Frieren.S01E01.mkv',
+        },
+      ],
+    };
+
+    const organized: OrganizationResult = {
+      moved: [],
+      linked: ['Frieren.S01E01.mkv'],
+      exists: [],
+      errors: [],
+    };
+
+    const helper = makeFormatHelper(torrentName, [
+      {
+        id: 'anime',
+        layout: 'series',
+        path: '/media/anime',
+        prompt: 'Japanese animation series',
+        label: 'Anime',
+        examples: ['anime example'],
+      },
+    ]);
+    const message = helper.formatTorrentResults({
+      classification,
+      organized,
+      torrentMoved: true,
+    });
+
+    expect(message).toContain('📺 \\[Anime\\] Frieren: Beyond Journeys End');
+  });
+
   it('should format message with multiple series and seasons', () => {
     const torrentName = 'Mixed.TV.Pack';
     const classification: ClassificationResult = {
@@ -117,7 +165,8 @@ describe('formatTelegramMessage', () => {
       description: 'Various TV episodes',
       files: [
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Breaking Bad',
           season: 1,
           episode: 1,
@@ -125,7 +174,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'Breaking.Bad.S01E01.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Breaking Bad',
           season: 2,
           episode: 1,
@@ -133,7 +183,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'Breaking.Bad.S02E01.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Better Call Saul',
           season: 1,
           episode: 1,
@@ -183,12 +234,14 @@ describe('formatTelegramMessage', () => {
       description: 'Mixed movies and TV content',
       files: [
         {
-          type: 'movie',
+          layout: 'movie',
+          category: 'movies',
           title: 'Inception',
           filePath: 'Inception.2010.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Westworld',
           season: 1,
           episode: 1,
@@ -196,7 +249,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'Westworld.S01E01.mkv',
         },
         {
-          type: 'movie',
+          layout: 'movie',
+          category: 'movies',
           title: 'Interstellar',
           filePath: 'Interstellar.2014.mkv',
         },
@@ -275,7 +329,8 @@ describe('formatTelegramMessage', () => {
       description: 'Complete season with sequential episodes',
       files: [
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Game of Thrones',
           season: 1,
           episode: 1,
@@ -283,7 +338,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'GoT.S01E01.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Game of Thrones',
           season: 1,
           episode: 2,
@@ -291,7 +347,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'GoT.S01E02.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Game of Thrones',
           season: 1,
           episode: 3,
@@ -299,7 +356,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'GoT.S01E03.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Game of Thrones',
           season: 1,
           episode: 5,
@@ -314,7 +372,6 @@ describe('formatTelegramMessage', () => {
       linked: [],
       exists: [],
       errors: [],
-      success: null,
     };
 
     const helper = makeFormatHelper(torrentName);
@@ -346,7 +403,8 @@ describe('formatTelegramMessage', () => {
       description: 'Season with episodes 1-11 in mixed order',
       files: [
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Test Series',
           season: 2,
           episode: 10,
@@ -354,7 +412,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'Test.S02E10.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Test Series',
           season: 2,
           episode: 1,
@@ -362,7 +421,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'Test.S02E01.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Test Series',
           season: 2,
           episode: 11,
@@ -370,7 +430,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'Test.S02E11.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Test Series',
           season: 2,
           episode: 2,
@@ -378,7 +439,8 @@ describe('formatTelegramMessage', () => {
           filePath: 'Test.S02E02.mkv',
         },
         {
-          type: 'series',
+          layout: 'series',
+          category: 'tv-series',
           seriesTitle: 'Test Series',
           season: 2,
           episode: 9,
@@ -431,8 +493,7 @@ describe('formatTelegramMessage', () => {
       exists: [],
       errors: [
         {
-          source: '/mnt/documents/downloads/torrents-complete/Frieren - Beyond Journey\'s End/S01E20.mkv',
-          destination: "/mnt/documents/multimedia/videos/series/Frieren: Beyond Journey's End/Season 1/S01E20.mkv",
+          filePath: 'S01E20.mkv',
           error:
             "ENOENT: no such file or directory, rename '/mnt/documents/downloads/torrents-complete/Frieren - Beyond Journey's End/S01E20.mkv' -> '/mnt/documents/multimedia/videos/series/Frieren: Beyond Journey's End/Season 1/S01E20.mkv'",
         },

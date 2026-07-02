@@ -1,6 +1,7 @@
 import {Agent, run, tool, webSearchTool} from '@openai/agents';
 import {z} from 'zod';
 
+import type {CategoryConfig} from './config';
 import {stripCitations} from './text-utils';
 import type {TorrentInfo} from './types';
 
@@ -10,63 +11,44 @@ const filePath = z
     'The media physical file path (.mkv, .mp4, .avi, etc). Will be used to relocate the file so it MUST be a proper path.',
   );
 
-export const movieFileSchema = z
-  .object({
-    type: z.literal('movie'),
-    title: z
-      .string()
-      .describe('Clean movie title without quality indicators, year, or release info'),
-    filePath,
-  })
-  .strict();
+export interface FileLayoutMovie {
+  layout: 'movie';
+  category: string;
+  title: string;
+  filePath: string;
+}
 
-export const seriesFileSchema = z
-  .object({
-    type: z.literal('series'),
-    seriesTitle: z
-      .string()
-      .describe('Clean TV series title without quality indicators or release info'),
-    season: z.number().describe('Season number'),
-    episode: z.number().describe('Episode number'),
-    episodeTitle: z
-      .string()
-      .nullable()
-      .describe('Clean episode title if available, otherwise null'),
-    filePath,
-  })
-  .strict();
+export interface FileLayoutSeries {
+  layout: 'series';
+  category: string;
+  seriesTitle: string;
+  season: number;
+  episode: number;
+  episodeTitle: string | null;
+  filePath: string;
+}
 
-export const fileSchema = z.discriminatedUnion('type', [
-  movieFileSchema,
-  seriesFileSchema,
-]);
+export type ClassifiedFile = FileLayoutMovie | FileLayoutSeries;
 
-export const classificationSchema = z
-  .object({
-    files: z.array(fileSchema).describe('List of relevant files within the torrent.'),
-    description: z.string().describe('A short description of this torrent'),
-    icon: z
-      .string()
-      .describe(
-        'A single emoji representing the media. Try to be specific to the movie or series!',
-      ),
-  })
-  .strict();
-
-export type ClassificationResult = z.infer<typeof classificationSchema>;
-export type SeriesFile = z.infer<typeof seriesFileSchema>;
-export type MovieFile = z.infer<typeof movieFileSchema>;
-export type ClassifiedFile = z.infer<typeof fileSchema>;
+export interface ClassificationResult {
+  files: ClassifiedFile[];
+  description: string;
+  icon: string;
+}
 
 interface AgentConfig {
+  categories: CategoryConfig[];
   /**
-   * Returns a TV Series name that already is in the TV Series directory.
+   * Returns an existing title within a category directory, if present.
    */
-  checkTvShowExists: (args: {name: string}) => Promise<string | null>;
+  checkCategoryTitleExists: (args: {
+    category: string;
+    name: string;
+  }) => Promise<string | null>;
   /**
-   * Returns a list of all currently existing TV Series
+   * Returns a list of existing titles within a category directory.
    */
-  listExistingTvSeries: () => Promise<string[]>;
+  listCategoryTitles: (args: {category: string}) => Promise<string[]>;
   /**
    * Extracts the given rar file (path relative to the torrent save directory)
    * and returns a list of extracted files
@@ -74,7 +56,120 @@ interface AgentConfig {
   unrarFile: (args: {rarFilePath: string}) => Promise<string[]>;
 }
 
-const INSTRUCTIONS = `
+function categoryIds(categories: CategoryConfig[]): [string, ...string[]] {
+  const [first, ...rest] = categories.map(category => category.id);
+
+  if (!first) {
+    throw new Error('At least one category must be configured');
+  }
+
+  return [first, ...rest];
+}
+
+function categoriesWithLayout(
+  categories: CategoryConfig[],
+  layout: CategoryConfig['layout'],
+) {
+  return categories.filter(category => category.layout === layout);
+}
+
+function createMovieLayoutSchema(categories: CategoryConfig[]) {
+  if (categories.length === 0) {
+    return null;
+  }
+
+  return z
+    .object({
+      layout: z.literal('movie'),
+      category: z
+        .enum(categoryIds(categories))
+        .describe('A configured movie organization category for this file.'),
+      title: z
+        .string()
+        .describe('Clean movie title without quality indicators, year, or release info'),
+      filePath,
+    })
+    .strict();
+}
+
+function createSeriesLayoutSchema(categories: CategoryConfig[]) {
+  if (categories.length === 0) {
+    return null;
+  }
+
+  return z
+    .object({
+      layout: z.literal('series'),
+      category: z
+        .enum(categoryIds(categories))
+        .describe('A configured series organization category for this file.'),
+      seriesTitle: z
+        .string()
+        .describe('Clean TV series title without quality indicators or release info'),
+      season: z.number().describe('Season number'),
+      episode: z.number().describe('Episode number'),
+      episodeTitle: z
+        .string()
+        .nullable()
+        .describe('Clean episode title if available, otherwise null'),
+      filePath,
+    })
+    .strict();
+}
+
+function createClassificationSchema(categories: CategoryConfig[]) {
+  const movieSchema = createMovieLayoutSchema(categoriesWithLayout(categories, 'movie'));
+  const seriesSchema = createSeriesLayoutSchema(
+    categoriesWithLayout(categories, 'series'),
+  );
+
+  const fileSchema =
+    movieSchema && seriesSchema
+      ? z.discriminatedUnion('layout', [movieSchema, seriesSchema])
+      : (movieSchema ?? seriesSchema);
+
+  if (!fileSchema) {
+    throw new Error('At least one category must be configured');
+  }
+
+  return z
+    .object({
+      files: z.array(fileSchema).describe('List of relevant files within the torrent.'),
+      description: z.string().describe('A short description of this torrent'),
+      icon: z
+        .string()
+        .describe(
+          'A single emoji representing the media. Try to be specific to the movie or series!',
+        ),
+    })
+    .strict();
+}
+
+function formatCategoryExample(example: string) {
+  return example
+    .trim()
+    .split('\n')
+    .map(line => `   ${line}`)
+    .join('\n');
+}
+
+function createInstructions(categories: CategoryConfig[]) {
+  if (categories.length === 0) {
+    throw new Error('At least one category must be configured');
+  }
+
+  const categoryList = categories
+    .map(category =>
+      [
+        ` - ${category.id} (${category.label}, ${category.layout} layout): ${category.prompt}`,
+        '',
+        '   Examples:',
+        category.examples.map(formatCategoryExample).join('\n\n'),
+      ].join('\n'),
+    )
+    .join('\n\n');
+
+  return `
 You are an expert on bit torrent "scene" releases, movies, and tv series. You're
 especially good at looking at the file list from a torrent, and categorizing
 media files.
@@ -86,12 +181,25 @@ Preprocessing the file list:
    files are considered as media for our final file list, be sure to set the
    filePath as the extracted file, not the source archive.
 
+Configured organization categories:
+
+${categoryList}
+
 Rules for categorization:
 
- - For TV Series first check if the name of TV Series exists so we know
-   we're orgaizing our episodes into an existing folder. If it doesn't you
-   should check the list of all existing TV Series  to see if you may have
-  inferend the name of the Series incorrectly.
+ - Every returned file MUST include one of the configured category IDs.
+
+ - The category chooses the destination library path and layout. Use the
+   category prompt to decide precedence when more than one category could apply.
+
+ - Use layout "movie" for feature-length films and one-off videos. Use layout
+   "series" for episodic media that has seasons and episode numbers. The file
+   layout MUST match the configured layout for the selected category.
+
+ - For series first check if the title exists in the selected category so we
+   know we're organizing episodes into an existing folder. If it doesn't, you
+   should check the list of existing titles in that category to see if you may
+   have inferred the series name incorrectly.
 
  - If you're not ABSOLUTELY sure of the name of the series or movie, use the
    webSearchTool to verify. For example if the movie contains a year in the
@@ -103,57 +211,32 @@ Rules for categorization:
    .nfo files, archive files, images, subtitles, etc should NEVER appear as a
    'filePath' in the final output list!
 
-Examples scenarios:
-
- - "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP.mkv"
-   → type: "movie",
-     title: "The Dark Knight",
-     filePath: "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP.mkv"
-
- - "Breaking.Bad.S01E01.Pilot.1080p.WEB-DL.x264/S01E01.mkv"
-   → type: "series",
-     seriesTitle: "Breaking Bad",
-     season: 1,
-     episode: 1,
-     filePath: "Breaking.Bad.S01E01.Pilot.1080p.WEB-DL.x264/S01E01.mkv"
-
- - "Toy.Story/Toy.Story.rar"
-    → Extract using unrar_file tool
-    → Tool returns ["Toy.Story/Toy.Story.mkv"], this list of files is
-      considered with the rest of the torrents files. Do NOT include the
-      archive itself as a filePath in the final list!
-    → type: "movie",
-      title: "Toy Story",
-      filePath: "Toy.Story/Toy.Story.mkv", (Note this is NOT the .rar file!)
-
- - "A.Star.Is.Born.1976.mkv"
-    → Web Search "a star is born" to see if the year is an important factor
-    → type: "movie",
-      title: "A Star Is Born (1976)" (there were multiple remakes with the same name)
-
  - "ubuntu-22.04.3-desktop-amd64.iso"
    → Ignored (not media)
 
  - "Sample.mkv"
    → Ignored (sample file)
 `.trim();
+}
 
 export function createAgent(config: AgentConfig) {
-  const checkTvShowExists = tool({
-    name: 'check_tv_show_exists',
+  const category = z.enum(categoryIds(config.categories));
+
+  const checkCategoryTitleExists = tool({
+    name: 'check_category_title_exists',
     description:
-      'Checks if a TV Series exists on the filesystem. Returns the existing series name',
-    parameters: z.object({name: z.string()}),
+      'Checks if a title exists on the filesystem for a configured organization category. Returns the existing title name.',
+    parameters: z.object({category, name: z.string()}),
     strict: true,
-    execute: config.checkTvShowExists,
+    execute: config.checkCategoryTitleExists,
   });
 
-  const listExistingTvSeries = tool({
-    name: 'list_existing_tv_series',
-    description: 'Lists existing TV Series series names',
-    parameters: z.object({}),
+  const listCategoryTitles = tool({
+    name: 'list_category_titles',
+    description: 'Lists existing title names for a configured organization category',
+    parameters: z.object({category}),
     strict: true,
-    execute: config.listExistingTvSeries,
+    execute: config.listCategoryTitles,
   });
 
   const unrarFile = tool({
@@ -167,12 +250,12 @@ export function createAgent(config: AgentConfig) {
   const agent = new Agent({
     name: 'Torrent Organizer',
     model: 'gpt-5-mini',
-    instructions: INSTRUCTIONS,
-    tools: [checkTvShowExists, listExistingTvSeries, unrarFile, webSearchTool()],
-    outputType: classificationSchema,
+    instructions: createInstructions(config.categories),
+    tools: [checkCategoryTitleExists, listCategoryTitles, unrarFile, webSearchTool()],
+    outputType: createClassificationSchema(config.categories),
   });
 
-  async function classifyTorrent(info: TorrentInfo) {
+  async function classifyTorrent(info: TorrentInfo): Promise<ClassificationResult> {
     const torrentContext = `Torrent: ${info.name}\n\nFiles:\n${info.fileNames.join('\n')}`;
 
     const result = await run(agent, torrentContext);
