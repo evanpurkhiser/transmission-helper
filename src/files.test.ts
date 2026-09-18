@@ -75,9 +75,9 @@ describe('organizeFiles', () => {
       exists: [],
       errors: [],
     });
-    expect((await stat(targetPath)).ino).toBe(
-      (await stat(join(torrentPath, sourceFile))).ino,
-    );
+    const targetStat = await stat(targetPath);
+    const sourceStat = await stat(join(torrentPath, sourceFile));
+    expect(targetStat.ino).toBe(sourceStat.ino);
   });
 
   it('organizes movie files into their configured category path', async () => {
@@ -129,9 +129,9 @@ describe('organizeFiles', () => {
       exists: [],
       errors: [],
     });
-    expect((await stat(targetPath)).ino).toBe(
-      (await stat(join(torrentPath, sourceFile))).ino,
-    );
+    const targetStat = await stat(targetPath);
+    const sourceStat = await stat(join(torrentPath, sourceFile));
+    expect(targetStat.ino).toBe(sourceStat.ino);
   });
 
   it('reports an error when file layout does not match category layout', async () => {

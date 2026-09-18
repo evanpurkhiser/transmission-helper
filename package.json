@@ -25,7 +25,7 @@
     "zod": "^3.0.0"
   },
   "devDependencies": {
-    "@evanpurkhiser/oxc-config": "^0.8.0",
+    "@evanpurkhiser/oxc-config": "^0.16.0",
     "@types/node": "^24.3.0",
     "oxfmt": "^0.47.0",
     "oxlint": "^1.62.0",
