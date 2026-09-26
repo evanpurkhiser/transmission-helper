@@ -75,6 +75,15 @@ export function makeFormatHelper(torrentName: string, categories: CategoryConfig
     ].join('\n');
   }
 
+  function formatNoCompleteFiles(): string {
+    return [
+      escapeMarkdown('📥 Torrent skipped'),
+      `*${escapeMarkdown(torrentName)}*`,
+      '',
+      escapeMarkdown('⚠️ No wanted files are complete'),
+    ].join('\n');
+  }
+
   function formatTorrentResults(options: FormatTorrentResultOptions): string {
     const {classification, organized, torrentMoved} = options;
     const lines = [
@@ -119,7 +128,7 @@ export function makeFormatHelper(torrentName: string, categories: CategoryConfig
     }
     if (errors.length > 0) {
       lines.push(`❌ Errors: ${errors.length} files`);
-      lines.push(...errors.map(i => `- ${escapeMarkdown(i.error)}`));
+      lines.push(...errors.map(i => escapeMarkdown(`- ${i.error}`)));
       lines.push('');
     }
 
@@ -137,6 +146,7 @@ export function makeFormatHelper(torrentName: string, categories: CategoryConfig
 
   return {
     formatTorrentFinished,
+    formatNoCompleteFiles,
     formatTorrentResults,
   };
 }

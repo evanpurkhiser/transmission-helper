@@ -5,7 +5,30 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
 import type {Config} from './config';
-import {organizeFiles} from './files';
+import {getCompleteWantedFiles, organizeFiles} from './files';
+
+describe('getCompleteWantedFiles', () => {
+  it('returns only wanted files whose bytes are complete', () => {
+    const files = [
+      {name: 'Episode 1.mkv', length: 100},
+      {name: 'Episode 2.mkv', length: 100},
+      {name: 'Episode 3.mkv', length: 100},
+    ];
+    const fileStats = [
+      {bytesCompleted: 100, wanted: true},
+      {bytesCompleted: 40, wanted: true},
+      {bytesCompleted: 100, wanted: false},
+    ];
+
+    expect(getCompleteWantedFiles(files, fileStats)).toEqual(['Episode 1.mkv']);
+  });
+
+  it('skips files without corresponding Transmission stats', () => {
+    const files = [{name: 'Episode 1.mkv', length: 100}];
+
+    expect(getCompleteWantedFiles(files, [])).toEqual([]);
+  });
+});
 
 describe('organizeFiles', () => {
   let tempDir: string | null = null;
