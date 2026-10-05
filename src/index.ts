@@ -7,7 +7,7 @@ import {readdir} from 'node:fs/promises';
 
 import {createAgent} from './agent';
 import {createConfig} from './config';
-import {organizeFiles, unrarFile} from './files';
+import {getCompleteWantedFiles, organizeFiles, unrarFile} from './files';
 import {makeFormatHelper} from './telegram';
 
 async function main() {
@@ -47,7 +47,12 @@ async function main() {
     });
   }
 
-  const fileNames = torrent.raw.files.map((file: any) => file.name);
+  const fileNames = getCompleteWantedFiles(torrent.raw.files, torrent.raw.fileStats);
+
+  if (fileNames.length === 0) {
+    await replaceMessage(helper.formatNoCompleteFiles());
+    return;
+  }
 
   function getCategoryPath(categoryId: string) {
     const category = config.categories.find(category => category.id === categoryId);

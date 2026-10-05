@@ -5,6 +5,19 @@ import type {OrganizationResult} from './files';
 import {makeFormatHelper} from './telegram';
 
 describe('formatTelegramMessage', () => {
+  it('should format a torrent with no complete wanted files', () => {
+    const helper = makeFormatHelper('Pet Shop of Horrors - Complete');
+
+    expect(helper.formatNoCompleteFiles()).toBe(
+      [
+        '📥 Torrent skipped',
+        '*Pet Shop of Horrors \\- Complete*',
+        '',
+        '⚠️ No wanted files are complete',
+      ].join('\n'),
+    );
+  });
+
   it('should format message with series files', () => {
     const torrentName = 'Breaking.Bad.S01.1080p.BluRay';
     const classification: ClassificationResult = {
@@ -509,7 +522,7 @@ describe('formatTelegramMessage', () => {
 
     expect(message).toContain('❌ Errors: 1 files');
     expect(message).toContain(
-      "- ENOENT: no such file or directory, rename '/mnt/documents/downloads/torrents\\-complete/Frieren \\- Beyond Journey's End/S01E20\\.mkv' \\-\\> '/mnt/documents/multimedia/videos/series/Frieren: Beyond Journey's End/Season 1/S01E20\\.mkv'",
+      "\\- ENOENT: no such file or directory, rename '/mnt/documents/downloads/torrents\\-complete/Frieren \\- Beyond Journey's End/S01E20\\.mkv' \\-\\> '/mnt/documents/multimedia/videos/series/Frieren: Beyond Journey's End/Season 1/S01E20\\.mkv'",
     );
   });
 });

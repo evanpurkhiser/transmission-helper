@@ -28,6 +28,31 @@ export interface OrganizationResult {
   errors: Array<{filePath: string; error: string}>;
 }
 
+interface TorrentFile {
+  name: string;
+  length: number;
+}
+
+interface TorrentFileStat {
+  bytesCompleted: number;
+  wanted: boolean;
+}
+
+export function getCompleteWantedFiles(
+  files: TorrentFile[],
+  fileStats: TorrentFileStat[],
+): string[] {
+  return files.flatMap((file, index) => {
+    const stats = fileStats[index];
+
+    if (!stats?.wanted || stats.bytesCompleted < file.length) {
+      return [];
+    }
+
+    return [file.name];
+  });
+}
+
 function getCategory(categories: CategoryConfig[], categoryId: string): CategoryConfig {
   const category = categories.find(category => category.id === categoryId);
 
