@@ -1,12 +1,12 @@
-## Transmission Helper
+# Transmission Helper
 
 [![Build](https://github.com/evanpurkhiser/transmission-helper/actions/workflows/main.yml/badge.svg)](https://github.com/evanpurkhiser/transmission-helper/actions/workflows/main.yml)
 
-An AI-powered tool that automatically classifies and organizes completed
-torrents from Transmission, then hard-links media files to your organized
-library structure.
+An AI-powered tool that automatically classifies
+and organizes completed torrents from Transmission,
+then hard-links media files to your organized library structure.
 
-### Quick Start
+## Quick Start
 
 ```bash
 docker run -d \
@@ -86,15 +86,19 @@ categories:
 ### What It Does
 
 1. **Fetches torrent info** from Transmission using the provided hash
-2. **AI Classification** - Uses OpenAI to analyze file names and classify content into configured categories
-3. **Smart Organization** - Matches series against existing category library structures
+2. **AI Classification** - Uses OpenAI to analyze file names
+   and classify content into configured categories
+3. **Smart Organization** - Matches series against existing category library
+   structures
 4. **Hard Linking** - Creates hard links to allow continued seeding
-5. **Telegram Notifications** - Sends detailed reports of what was processed and linked
+5. **Telegram Notifications** - Sends detailed reports of what was processed
+   and linked
 
 ### Environment Variables
 
 - `TRANSMISSION_HELPER_CONFIG` - Path to the YAML configuration file
-- `TORRENT_HASH` - Hash of the completed torrent to process. Typically should be set
+- `TORRENT_HASH` - Hash of the completed torrent to process.
+  Typically should be set
 - `OPENAI_API_KEY` - OpenAI API key for content classification
 - `TRANSMISSION_BASE_URL` - URL to Transmission RPC endpoint
 - `TRANSMISSION_USERNAME` - (Optional) Transmission auth username
@@ -106,10 +110,12 @@ categories:
 
 ### YAML Configuration
 
-The YAML file provides organization categories and can also provide stable
-application settings. Values from environment variables override matching YAML
-settings, which keeps secrets easy to inject at runtime. `TORRENT_HASH` is always
-read from the environment because it is supplied per Transmission completion.
+The YAML file provides organization categories
+and can also provide stable application settings.
+Values from environment variables override matching YAML settings,
+which keeps secrets easy to inject at runtime.
+`TORRENT_HASH` is always read from the environment
+because it is supplied per Transmission completion.
 
 ```yaml
 openaiApiKey: your_openai_key
@@ -138,8 +144,8 @@ categories:
            filePath: "The.Dark.Knight.2008.1080p.BluRay.x264-GROUP.mkv"
 ```
 
-Each category must declare `layout: movie` or `layout: series`. Movie categories are
-organized as single files under the category path, while series categories are
-organized as `Series Title/Season N/SNNENN.ext`.
-Each category also declares `examples` as literal block scalars used verbatim in
-the AI classification prompt.
+Each category must declare `layout: movie` or `layout: series`.
+Movie categories are organized as single files under the category path,
+while series categories are organized as `Series Title/Season N/SNNENN.ext`.
+Each category also declares `examples`
+as literal block scalars used verbatim in the AI classification prompt.
