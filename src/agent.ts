@@ -249,7 +249,7 @@ export function createAgent(config: AgentConfig) {
 
   const agent = new Agent({
     name: 'Torrent Organizer',
-    model: 'gpt-5-mini',
+    model: 'gpt-6.1-terra',
     instructions: createInstructions(config.categories),
     tools: [checkCategoryTitleExists, listCategoryTitles, unrarFile, webSearchTool()],
     outputType: createClassificationSchema(config.categories),
