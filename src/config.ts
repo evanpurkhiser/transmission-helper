@@ -101,53 +101,33 @@ function mergeConfig(base: FileConfig, override: FileConfig): FileConfig {
 }
 
 function envConfig(env: Record<string, string | undefined>): FileConfig {
-  const config: FileConfig = {};
+  const {
+    OPENAI_API_KEY,
+    TRANSMISSION_BASE_URL,
+    TRANSMISSION_USERNAME,
+    TRANSMISSION_PASSWORD,
+    TELEGRAM_TOKEN,
+    TELEGRAM_CHAT_ID,
+    SENTRY_DSN,
+    MOVE_COMPLETE_DIR,
+  } = env;
+  const transmission = {
+    ...(TRANSMISSION_BASE_URL ? {baseUrl: TRANSMISSION_BASE_URL} : {}),
+    ...(TRANSMISSION_USERNAME ? {username: TRANSMISSION_USERNAME} : {}),
+    ...(TRANSMISSION_PASSWORD ? {password: TRANSMISSION_PASSWORD} : {}),
+  };
+  const telegram = {
+    ...(TELEGRAM_TOKEN ? {token: TELEGRAM_TOKEN} : {}),
+    ...(TELEGRAM_CHAT_ID ? {chatId: TELEGRAM_CHAT_ID} : {}),
+  };
 
-  if (env.OPENAI_API_KEY) {
-    config.openaiApiKey = env.OPENAI_API_KEY;
-  }
-
-  const transmission: NonNullable<FileConfig['transmission']> = {};
-
-  if (env.TRANSMISSION_BASE_URL) {
-    transmission.baseUrl = env.TRANSMISSION_BASE_URL;
-  }
-
-  if (env.TRANSMISSION_USERNAME) {
-    transmission.username = env.TRANSMISSION_USERNAME;
-  }
-
-  if (env.TRANSMISSION_PASSWORD) {
-    transmission.password = env.TRANSMISSION_PASSWORD;
-  }
-
-  if (Object.keys(transmission).length > 0) {
-    config.transmission = transmission;
-  }
-
-  const telegram: NonNullable<FileConfig['telegram']> = {};
-
-  if (env.TELEGRAM_TOKEN) {
-    telegram.token = env.TELEGRAM_TOKEN;
-  }
-
-  if (env.TELEGRAM_CHAT_ID) {
-    telegram.chatId = env.TELEGRAM_CHAT_ID;
-  }
-
-  if (Object.keys(telegram).length > 0) {
-    config.telegram = telegram;
-  }
-
-  if (env.SENTRY_DSN) {
-    config.sentryDsn = env.SENTRY_DSN;
-  }
-
-  if (env.MOVE_COMPLETE_DIR) {
-    config.moveCompleteDir = env.MOVE_COMPLETE_DIR;
-  }
-
-  return fileConfigSchema.parse(config);
+  return fileConfigSchema.parse({
+    ...(OPENAI_API_KEY ? {openaiApiKey: OPENAI_API_KEY} : {}),
+    ...(Object.keys(transmission).length ? {transmission} : {}),
+    ...(Object.keys(telegram).length ? {telegram} : {}),
+    ...(SENTRY_DSN ? {sentryDsn: SENTRY_DSN} : {}),
+    ...(MOVE_COMPLETE_DIR ? {moveCompleteDir: MOVE_COMPLETE_DIR} : {}),
+  });
 }
 
 function formatCategoryLabel(id: string): string {

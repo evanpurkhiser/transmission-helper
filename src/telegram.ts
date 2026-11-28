@@ -11,6 +11,21 @@ export interface FormatTorrentResultOptions {
   torrentMoved: boolean;
 }
 
+function formatOrganizationDetails({errors, exists, linked, moved}: OrganizationResult) {
+  return [
+    ...(linked.length ? [`♻️ Linked: ${linked.length} files`] : []),
+    ...(moved.length ? [`🗂️ Moved: ${moved.length} files`] : []),
+    ...(exists.length ? [`⚠️ Skipped: ${exists.length} files \\(already exist\\)`] : []),
+    ...(errors.length
+      ? [
+          `❌ Errors: ${errors.length} files`,
+          ...errors.map(error => escapeMarkdown(`- ${error.error}`)),
+          '',
+        ]
+      : []),
+  ];
+}
+
 function stringRange(nums: number[]): string[] {
   const groupedRanges = groupBy(
     nums.map((num, index) => ({num, index})),
@@ -115,28 +130,12 @@ export function makeFormatHelper(torrentName: string, categories: CategoryConfig
 
     lines.push('');
 
-    const {errors, exists, linked, moved} = organized;
-
-    if (linked.length > 0) {
-      lines.push(`♻️ Linked: ${linked.length} files`);
-    }
-    if (moved.length > 0) {
-      lines.push(`🗂️ Moved: ${moved.length} files`);
-    }
-    if (exists.length > 0) {
-      lines.push(`⚠️ Skipped: ${exists.length} files \\(already exist\\)`);
-    }
-    if (errors.length > 0) {
-      lines.push(`❌ Errors: ${errors.length} files`);
-      lines.push(...errors.map(i => escapeMarkdown(`- ${i.error}`)));
-      lines.push('');
-    }
-
-    if (torrentMoved) {
-      lines.push('🗄️ Torrent moved to seeding directory');
-    } else {
-      lines.push('⚠️ Torrent left in download directory');
-    }
+    lines.push(
+      ...formatOrganizationDetails(organized),
+      torrentMoved
+        ? '🗄️ Torrent moved to seeding directory'
+        : '⚠️ Torrent left in download directory',
+    );
 
     return lines
       .join('\n')

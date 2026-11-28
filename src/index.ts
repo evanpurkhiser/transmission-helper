@@ -6,56 +6,53 @@ import {TelegramBot} from 'typescript-telegram-bot-api';
 import {readdir} from 'node:fs/promises';
 
 import {createAgent} from './agent';
-import {createConfig} from './config';
+import {createConfig, type CategoryConfig, type Config} from './config';
 import {getCompleteWantedFiles, organizeFiles, unrarFile} from './files';
 import {makeFormatHelper} from './telegram';
 
-async function main() {
-  const config = await createConfig(process.env);
-
-  init({dsn: config.sentryDsn});
-  setDefaultOpenAIKey(config.openaiApiKey);
-
-  const client = new Transmission({
-    baseUrl: config.transmission.baseUrl,
-    username: config.transmission.username,
-    password: config.transmission.password,
-  });
-
-  const chat = new TelegramBot({botToken: config.telegram.token});
-
-  const torrentId = config.torrentHash;
-  const torrent = await client.getTorrent(torrentId);
-
-  const helper = makeFormatHelper(torrent.name, config.categories);
-
+async function startTelegramUpdate(
+  chat: TelegramBot,
+  chatId: Config['telegram']['chatId'],
+  text: string,
+) {
   const message = await chat.sendMessage({
-    text: helper.formatTorrentFinished(),
-    chat_id: config.telegram.chatId,
+    text,
+    chat_id: chatId,
     parse_mode: 'MarkdownV2',
   });
 
-  async function replaceMessage(text: string) {
-    await chat.deleteMessage({
-      chat_id: config.telegram.chatId,
-      message_id: message.message_id,
-    });
+  return async (updatedText: string) => {
+    await chat.deleteMessage({chat_id: chatId, message_id: message.message_id});
     return chat.sendMessage({
-      chat_id: config.telegram.chatId,
+      chat_id: chatId,
       parse_mode: 'MarkdownV2',
-      text,
+      text: updatedText,
     });
+  };
+}
+
+async function moveOrganizedTorrent(
+  client: Transmission,
+  torrentId: string,
+  {moved, linked, exists, errors}: Awaited<ReturnType<typeof organizeFiles>>,
+  destination?: string,
+) {
+  if (
+    !destination ||
+    moved.length + linked.length === 0 ||
+    errors.length ||
+    exists.length
+  ) {
+    return false;
   }
 
-  const fileNames = getCompleteWantedFiles(torrent.raw.files, torrent.raw.fileStats);
+  await client.moveTorrent(torrentId, destination);
+  return true;
+}
 
-  if (fileNames.length === 0) {
-    await replaceMessage(helper.formatNoCompleteFiles());
-    return;
-  }
-
+function categoryLookups(categories: readonly CategoryConfig[]) {
   function getCategoryPath(categoryId: string) {
-    const category = config.categories.find(category => category.id === categoryId);
+    const category = categories.find(category => category.id === categoryId);
 
     if (!category) {
       throw new Error(`Unknown organization category: ${categoryId}`);
@@ -87,10 +84,41 @@ async function main() {
     return titles.find(title => title.toLowerCase() === name.toLowerCase()) ?? null;
   }
 
+  return {listCategoryTitles, checkCategoryTitleExists};
+}
+
+async function main() {
+  const config = await createConfig(process.env);
+
+  init({dsn: config.sentryDsn});
+  setDefaultOpenAIKey(config.openaiApiKey);
+
+  const client = new Transmission({
+    baseUrl: config.transmission.baseUrl,
+    username: config.transmission.username,
+    password: config.transmission.password,
+  });
+
+  const chat = new TelegramBot({botToken: config.telegram.token});
+  const torrentId = config.torrentHash;
+  const torrent = await client.getTorrent(torrentId);
+  const helper = makeFormatHelper(torrent.name, config.categories);
+  const replaceMessage = await startTelegramUpdate(
+    chat,
+    config.telegram.chatId,
+    helper.formatTorrentFinished(),
+  );
+
+  const fileNames = getCompleteWantedFiles(torrent.raw.files, torrent.raw.fileStats);
+
+  if (fileNames.length === 0) {
+    await replaceMessage(helper.formatNoCompleteFiles());
+    return;
+  }
+
   const agent = createAgent({
     categories: config.categories,
-    listCategoryTitles,
-    checkCategoryTitleExists,
+    ...categoryLookups(config.categories),
     unrarFile: ({rarFilePath}) => unrarFile(torrent.savePath, rarFilePath),
   });
 
@@ -106,21 +134,17 @@ async function main() {
     config,
   );
 
-  const {moved, linked, exists, errors} = organized;
-
-  // Only move torrents if we successfully organize the torrent
-  const moveTorrent =
-    [...moved, ...linked].length > 0 && errors.length === 0 && exists.length === 0;
-  const moveCompleteDir = config.moveCompleteDir;
-
-  if (moveTorrent && moveCompleteDir) {
-    await client.moveTorrent(torrentId, moveCompleteDir);
-  }
+  const torrentMoved = await moveOrganizedTorrent(
+    client,
+    torrentId,
+    organized,
+    config.moveCompleteDir,
+  );
 
   const telegramMessage = helper.formatTorrentResults({
     classification,
     organized,
-    torrentMoved: moveTorrent && Boolean(moveCompleteDir),
+    torrentMoved,
   });
 
   await replaceMessage(telegramMessage);
